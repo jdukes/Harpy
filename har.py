@@ -3,8 +3,8 @@
 # well fuck.
 # 1) decide if validation logic be a private method of the metaclass,
 # or should it be moved to helper functions...
+### data should be validated on instantiation. 
 # 2) move datetime validation to be a function or method.
-
 
 import json
 import re #may not use this
@@ -42,20 +42,23 @@ class ValidationError(Exception):
 ###############################################################################
 
 #------------------------------------------------------------------------------
-# validation helpers
-#------------------------------------------------------------------------------
-
-# do I put something here, or not??
-
-#------------------------------------------------------------------------------
 # other helpers
 #------------------------------------------------------------------------------
 
-def har_from_request():
+def har_req_from_str(req):
+    rlist = req.split('\n')
     pass
 
 
-def har_from_response():
+def har_req_to_str():
+    pass
+
+
+def har_res_from_str():
+    pass
+
+
+def har_res_to_str():
     pass
 
 
@@ -64,10 +67,6 @@ def har_from_file(name):
     json_data = json.loads(fd.read())
     log = Log(json_data["log"])
     return log
-
-def har_from_stream():
-    pass
-
 
 #def res_from_urllib():
 
