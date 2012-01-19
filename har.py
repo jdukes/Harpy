@@ -6,12 +6,51 @@
 ### data should be validated on instantiation. 
 # 2) move datetime validation to be a function or method.
 
+# change initialization 
+
 import json
 import re #may not use this
 from socket import inet_pton, AF_INET6, AF_INET #used to validate ip addresses
 from socket import error as socket_error #used to validate ip addresses
 import os #used for testing, get rid of this later
 from dateutil import parser
+
+
+##############################################################################
+# Static Definitions
+###############################################################################
+
+METHODS = ["OPTIONS",
+           "GET",
+           "HEAD",
+           "POST",
+           "PUT",
+           "DELETE",
+           "TRACE",
+           "CONNECT", #for proxy, request coming in as this 
+           "PROPFIND",
+           "PROPPATCH",
+           "MKCOL",
+           "COPY",
+           "MOVE",
+           "LOCK",
+           "UNLOCK",
+           "VERSION-CONTROL",
+           "REPORT",
+           "CHECKOUT",
+           "CHECKIN",
+           "UNCHECKOUT",
+           "MKWORKSPACE",
+           "UPDATE",
+           "LABEL",
+           "MERGE",
+           "BASELINE-CONTROL",
+           "MKACTIVITY",
+           "ORDERPATCH",
+           "ACL",
+           "PATCH",
+           "SEARCH",
+           "ARBITRARY"]
 
 
 ###############################################################################
@@ -41,14 +80,18 @@ class ValidationError(Exception):
 # Helper Functions
 ###############################################################################
 
-#------------------------------------------------------------------------------
-# other helpers
-#------------------------------------------------------------------------------
 
-def har_req_from_str(req):
-    rlist = req.split('\n')
-    pass
-
+def har_req_from_str(req, proto='http', comment=''): #will need to
+                                                     #handle ssl later
+    #base request
+    headers, body = req.split('\n\n')
+    headers = headers.split('\n')
+    method, path, httpVersion = headers[0].split()
+    url = '%s://%s/%s' % ( proto, host, path)
+    headerSize = len(headers)
+    bodySize = len(body)
+    #post data
+    
 
 def har_req_to_str():
     pass
@@ -322,7 +365,7 @@ class Request(MetaHar):
 
     def _construct(self):
         if "postData" in self:
-            self.postData = Postdata(self.postData)
+            self.postData = PostData(self.postData)
 
     def __repr__(self):
         return "<Request to {0}>".format(self.url)
@@ -385,6 +428,13 @@ class Header(MetaHar):
 class QueryString(MetaHar):
     pass
 
+
+#------------------------------------------------------------------------------
+
+
+class PostData(MetaHar):
+    #finish this
+    pass
 
 #------------------------------------------------------------------------------
 
