@@ -1,3 +1,5 @@
+* TODO
+
 * general notes
 ** extend har with _sequence _serverIPAddress
 ** objects will be able to be instantiated in different ways but will all return either a har request or har response object
@@ -10,7 +12,7 @@
 ** _sequence is not required, but MUST be exposed IF multiple requests are to be parsed
 * extra notes
 ** vipe <- use for editing on pipes
-** replay a request from a har and check response for...
+** replay a request from a har and check response for
 *** matching a regex
 *** % match to a previous response
 ** export from burp repeater to har
