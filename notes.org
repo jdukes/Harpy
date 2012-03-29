@@ -11,6 +11,7 @@
 *** resolves the ip from host and exposes _serverIPAddress
 ** _sequence is not required, but MUST be exposed IF multiple requests are to be parsed
 * extra notes
+** all tied together called Cthulhu Web Destroyer (cwd)
 ** vipe <- use for editing on pipes
 ** replay a request from a har and check response for
 *** matching a regex
@@ -21,4 +22,23 @@
 *** comment in response for test outcome
 *** create interface for controlling metadata
 
+* example
+** cat | socat tcp4-l:9999,fork,reuseaddr system:'0>&3 cat& cat 1>&4',fdin=3,fdout=4 | cat
+** cat tmpfifo | socat PIPE:tmpfifo2  - | socat tcp4-l:9995,fork,reuseaddr - | socat PIPE:tmpfifo - & cat tmpfifo  > tmpfifo2
 
+
+* CFP
+** give use cases
+*** use cases 1 complex searches with multiple params
+*** use cases 2 quick sitemap
+*** fuzz and give me the most different
+*** record login & make into a function
+
+*** use a live session (perhaps selenium)
+*** easy multiple search in one line
+*** use soup to parse response to get something specific easily and sequence
+** draw flow chart 
+*** explain IPC mechanisms
+**** pipe
+***** black boxes: Filter, Requestor, Proxy Listener
+**** shell plugin
