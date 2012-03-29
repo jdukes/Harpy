@@ -78,7 +78,7 @@ class HarEncoder(json.JSONEncoder):
             return dict( (k,v) for k,v in obj.__dict__.iteritems()
                          if k != "_parent" )
         if isinstance(obj, datetime):
-            return str(datetime) #this isn't quite right, needs to be fixed
+            return str(datetime) #!!!this isn't quite right, needs to be fixed
         return json.JSONEncoder.default(self, obj)
 
 #def as_har(dict):
@@ -105,25 +105,37 @@ class MetaHar(object):
         return self.to_json()
 
     def __repr__(self):
-        return "<{0} {1}>".format(
+        return "<{0} {1} ({2})>".format(
             self.__class__.__name__,
-            'name' in self.__dict__ and self.name or "[undefined]")
+            'name' in self.__dict__ and self.name or "[undefined]",
+            self._get_printable_kids())
 
-    def children(self):
-        """children() -> list
+    def _get_printable_kids(self):
+        """_get_printable_kids() -> list
 
         Return all objects that are children of the object on which
         the method is called.
         """
-        return [ k for k,v in self.__dict__.iteritems()
+        return tuple( str(k) for k,v in self.__dict__.iteritems()
                  if k[0] != "_" and 
                  (isinstance(v, MetaHar)
-                  or isinstance(v, list)) ]
+                  or isinstance(v, list)
+                  or isinstance(v, unicode)
+                  or isinstance(v, str))) or '(empty)'
 
-    def from_har_file(self, filename):
-        fd = open(filename, 'r')
-        self.from_json(fd.read())
-        fd.close()
+
+    def get_children(self):
+        """get_children() -> list
+
+        Return all objects that are children of the object on which
+        the method is called.
+        """
+        return [ v for k,v in self.__dict__.iteritems()
+                 if k != "_parent" and 
+                 (isinstance(v, MetaHar)
+                  or isinstance(v, list)
+                  or isinstance(v, unicode)
+                  or isinstance(v, str))]
 
     def from_json(self, json_data):
         json_data = json.loads(json_data)
@@ -141,7 +153,10 @@ class MetaHar(object):
         pass
 
     def to_json(self):
-        return json.dumps(self, indent=4, cls=HarEncoder)
+        #return json.dumps(self, indent=4, cls=HarEncoder)
+        ## for now we're going to use line return as a deleniator
+        ## later we'll write a json stream parser
+        return json.dumps(self, indent=None, cls=HarEncoder)
 
     def validate(self): #default behavior
         # change this to a couple of class vars
@@ -171,11 +186,12 @@ class MetaHar(object):
                 
 #------------------------------------------------------------------------------
 
-class Har(MetaHar):
+class HarContainer(MetaHar):
 
     def __repr__(self):
-        return "<{0}>".format(
-            self.__class__.__name__)            
+        return "<{0}: {1}>".format(
+            self.__class__.__name__,
+            self._get_printable_kids())
 
     def _construct(self):
         self.log = Log(self.log, self)
@@ -212,10 +228,11 @@ class Log(MetaHar):
 
     def __repr__(self):
         try:
-            return "<Log object version {0} created by {1} {2}>".format(
+            return "<HAR {0} Log created by {1} {2}: {3}>".format(
                 self.version,
                 self.creator.name,
-                self.creator.version)
+                self.creator.version,
+                self._get_printable_kids())
         except AttributeError:
             return "<Log object not fully initilized>"
             
@@ -235,8 +252,9 @@ class Creator(MetaHar):
         self._check_field_types(field_defs)
 
     def __repr__(self):
-        return "<Creator object {0}>".format(self.name)
-
+        return "<Created by {0}: {1}>".format(
+            self.name, self._get_printable_kids())
+    
 
 #------------------------------------------------------------------------------
 
@@ -244,7 +262,8 @@ class Creator(MetaHar):
 class Browser(Creator):
 
     def __repr__(self):
-        return "<Browser object {0}>".format(self.name)
+        return "<Browser  '{0}': {1} >".format(
+            self.name, self._get_printable_kids())
 
 
 #------------------------------------------------------------------------------
@@ -273,7 +292,8 @@ class Page(MetaHar):
         self.pageTimings = PageTimings(self.pageTimings)
     
     def __repr__(self):
-        return "<Page with title {0}>".format(self.title)
+        return "<Page with title '{0}': {1}>".format(
+            self.title, self._get_printable_kids())
 
 
 #------------------------------------------------------------------------------
@@ -292,8 +312,8 @@ class PageTimings(MetaHar):
         self._check_field_types(field_defs)
 
     def __repr__(self):
-        return "<Page timing object>"
-
+        return "<Page timing : {0}>".format(
+            self._get_printable_kids())
 
 #------------------------------------------------------------------------------
 
@@ -339,7 +359,8 @@ class Entry(MetaHar):
         self.timings = Timings(self.timings)
 
     def __repr__(self):
-        return "<Entry object>" 
+        return "<Entry object {0}>".format(self._get_printable_kids())
+            
 
 
 #------------------------------------------------------------------------------
@@ -367,10 +388,17 @@ class Request(MetaHar):
     def _construct(self):
         if "postData" in self.__dict__:
             self.postData = PostData(self.postData)
+        if "headers" in self.__dict__:
+            self.headers = [ Header(header) for header in self.headers]
+        if "cookies" in self.__dict__:
+            self.cookies = [ Cookie(cookie) for cookie in self.cookies]
+
+        
 
     def __repr__(self):
-        return "<Request to {0}>".format(self.url)
-
+        return "<Request to '{0}': {1}>".format(
+            self.url,self._get_printable_kids())
+    
     def from_raw_req(self, req, proto='http', comment=''):
         # Raw request does not have proto info
         headers, body = req.split('\n\n')
@@ -425,7 +453,16 @@ class Response(MetaHar):
         self._check_field_types(field_defs)
 
     def __repr__(self):
-        return "<Response with code {0}:{1}>".format(self.status, self.statusText)
+        return "<Response with code {0} - '{1}': {2}>".format(
+            self.status, self.statusText, self._get_printable_kids())
+
+    def _construct(self):
+        if "postData" in self.__dict__:
+            self.postData = PostData(self.postData)
+        if "headers" in self.__dict__:
+            self.headers = [ Header(header) for header in self.headers]
+        if "cookies" in self.__dict__:
+            self.cookies = [ Cookie(cookie) for cookie in self.cookies]
 
 
 #------------------------------------------------------------------------------
@@ -452,13 +489,22 @@ class Cookie(MetaHar):
             raise ValidationError("Failed to parse date: {0}".format(e))
 
     def __repr__(self):
-        return "<Cookie {0} set to {1}>".format(self.name, self.value)
+        return "<Cookie {0} set to {1}: {2}>".format(
+            self.name, self.value, self._get_printable_kids())
 
 #------------------------------------------------------------------------------
 
 
 class Header(MetaHar):
-    pass
+
+    def __repr__(self):
+        return "<{0} {1}: {2}>".format(
+            self.__class__.__name__,
+            'name' in self.__dict__ and self.name or "[undefined]",
+            'value' in self.__dict__ and self.value or "[undefined]")
+
+        
+
 
 
 #------------------------------------------------------------------------------
@@ -481,6 +527,10 @@ class PostData(MetaHar):
             if "comment" in self.__dict__:
                 field_types["comment"] = [unicode, str]
             self._check_field_types(field_types)
+
+        def _construct(self):
+            if "params" in self.__dict__:
+                self.params = [ Param(param) for param in self.params]
 
 
 #------------------------------------------------------------------------------
@@ -531,11 +581,12 @@ class Cache(MetaHar):
     def _construct(self):
         for field in ["beforeRequest", "afterRequest"]:
             if field in self.__dict__:
-                self.__dict__.__setitem__(field) = RequestCache(
-                    self.__dict__.get(field))
+                self.__dict__[field] = RequestCache(
+                    self.__dict__.get(field)) #what am I doing.....
     
     def __repr__(self):
-        return "<Cache>"
+        return "<Cache: {0}>".format(
+            self._get_printable_kids())
 
 #------------------------------------------------------------------------------
 
@@ -552,7 +603,7 @@ class RequestCache(MetaHar):
             field_types["comment"] = [unicode, str]
         self._check_field_types(field_types)
 
-        
+        #needs  __repr__
 
 #------------------------------------------------------------------------------    
 
@@ -569,7 +620,8 @@ class Timings(MetaHar):
         self._check_field_types(field_defs)
 
     def __repr__(self):
-        return "<Timings>" #fix
+        return "<Timings: {0}>".format(
+            self._get_printable_kids())
     
 
 ###############################################################################
@@ -578,7 +630,10 @@ class Timings(MetaHar):
 
 
 if __name__ == "__main__":
-    har = Har()
+    har = HarContainer()
     #har.from_har_file(os.path.expanduser('~/tmp/demo.har'))
-    har.from_har_file(os.path.expanduser('./demo.har'))
+    fd = open(os.path.expanduser('./demo.har'))
+    har.from_json(fd.read())
+    fd.close()
+                  
 
