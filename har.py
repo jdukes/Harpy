@@ -435,16 +435,18 @@ class Request(MetaHar):
             self.postData = PostData(self.postData)
         if "headers" in self.__dict__:
             self.headers = [ Header(header) for header in self.headers]
+            if all('_sequence' in header for header in self.headers):
+                self.header.sort(key=lambda i: i._sequence)
         if "cookies" in self.__dict__:
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
-
-
+            if all('_sequence' in cookie for cookie in self.cookies):
+                self.cookie.sort(key=lambda i: i._sequence)
 
     def __repr__(self):
         return "<Request to '{0}': {1}>".format(
             self.url,self._get_printable_kids())
 
-    def from_raw_req(self, req, proto='http', comment=''):
+    def devour(self, req, proto='http', comment=''):
         # Raw request does not have proto info
         headers, body = req.split('\n\n')
         headers = headers.split('\n')
@@ -454,11 +456,14 @@ class Request(MetaHar):
         bodySize = len(body)
         #post
 
-    def to_raw_req(self):
+    def puke(self):
+        return self.render()
+
+    def render(self):
         #this may not work...
         r = "%(method)s %(url)s HTTP/%(httpVersion)s\n" % self.__dict__
         if self.headers:
-            #these may need to be capitalized.
+            #these may need to be capitalized. should be fixed in spec.
             r += "\n".join( "%(name)s: %(value)s" % h
                             for h in self.headers)
             r += "\n"
