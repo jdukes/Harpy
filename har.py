@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import json
-import re #may not use this
+from StringIO import StringIO
 from socket import inet_pton, AF_INET6, AF_INET #used to validate ip addresses
 from socket import error as socket_error #used to validate ip addresses
 import os #used for testing, get rid of this later
@@ -19,7 +19,9 @@ METHODS = ["OPTIONS",
            "PUT",
            "DELETE",
            "TRACE",
-           "CONNECT", #for proxy, request coming in as this 
+           "BREW", #added for RFC2324 compliance
+           "WHEN", #added for RFC2324 compliance
+           "CONNECT", #for proxy, request coming in as this
            "PROPFIND",
            "PROPPATCH",
            "MKCOL",
@@ -66,6 +68,11 @@ class ValidationError(Exception):
 
     def __init__(self, msg):
         self.msg = msg
+
+    def __str__(self):
+        return str(self.msg)
+
+
 ###############################################################################
 # JSON Overrides and Hooks
 ###############################################################################
@@ -81,9 +88,6 @@ class HarEncoder(json.JSONEncoder):
             return str(datetime) #!!!this isn't quite right, needs to be fixed
         return json.JSONEncoder.default(self, obj)
 
-#def as_har(dict):
-    
-
 
 ###############################################################################
 # HAR Classes
@@ -95,12 +99,36 @@ class MetaHar(object):
     default methods and objects."""
     # this needs to be a tree so child objects can validate that they
     # are uniq children
-    
-    def __init__(self, init_dict=None, parent=None):
+
+    def __init__(self, init_from=None, parent=None):
+        """ Needs documentation
+        """
         self._parent = parent
-        if init_dict:
-            self.from_dict(init_dict)
-    
+        assert type(init_from) in [unicode, str, file, dict], \
+               ("A har can only be initialized from a string, "
+                "file object, or dict")
+        if init_from:
+            if type(init_from) in [unicode, str, file]:
+                if type(init_from) == unicode or type(init_from) == str:
+                    fd = StringIO(init_from)
+                else:
+                    fd = init_from
+                self.from_json(fd.read())
+                fd.close()
+            else:
+                self.from_dict(init_from)
+
+    def __iter__(self):
+        return (v for k,v in self.__dict__.iteritems()
+                 if k != "_parent" and
+                 (isinstance(v, MetaHar)
+                  or isinstance(v, list)
+                  or isinstance(v, unicode)
+                  or isinstance(v, str)))
+
+    def __contains__(self, obj):
+        return obj in self._get_printable_kids()
+
     def __str__(self):
         return self.to_json()
 
@@ -117,11 +145,11 @@ class MetaHar(object):
         the method is called.
         """
         return tuple( str(k) for k,v in self.__dict__.iteritems()
-                 if k[0] != "_" and 
-                 (isinstance(v, MetaHar)
-                  or isinstance(v, list)
-                  or isinstance(v, unicode)
-                  or isinstance(v, str))) or '(empty)'
+                 if (str(k) != "_parent" and
+                     (isinstance(v, MetaHar)
+                      or isinstance(v, list)
+                      or isinstance(v, unicode)
+                      or isinstance(v, str)))) or '(empty)'
 
 
     def get_children(self):
@@ -130,12 +158,8 @@ class MetaHar(object):
         Return all objects that are children of the object on which
         the method is called.
         """
-        return [ v for k,v in self.__dict__.iteritems()
-                 if k != "_parent" and 
-                 (isinstance(v, MetaHar)
-                  or isinstance(v, list)
-                  or isinstance(v, unicode)
-                  or isinstance(v, str))]
+        #dunno if I like this method... maybe should be a generator?
+        return [ v for k,v in self ]
 
     def from_json(self, json_data):
         json_data = json.loads(json_data)
@@ -146,7 +170,7 @@ class MetaHar(object):
         self.__dict__.update(json_dict)
         self.validate()
         self._construct()
-        
+
     def _construct(self):
         #when constructing child objects, pass self so parent hierachy
         #can exist
@@ -162,7 +186,7 @@ class MetaHar(object):
         # change this to a couple of class vars
         field_types = {"name":[unicode, str],
                        "value":[unicode, str]}
-        self._has_fields(*field_types.keys())            
+        self._has_fields(*field_types.keys())
         if "comment" in self.__dict__:
             field_types["comment"] = [unicode, str]
         self._check_field_types(field_types)
@@ -182,8 +206,29 @@ class MetaHar(object):
                 assert type(self.__dict__[fname]) is ftype, (
                     "{0} filed '{1}' must be of type: {2}"
                     .format(self.__class__.__name__, fname, ftype))
-                                
-                
+
+#------------------------------------------------------------------------------
+
+class KeyValueHar(MetaHar):
+
+    def validate(self): #default behavior
+        field_types = {"name":[unicode, str],
+                       "value":[unicode, str]}
+        self._has_fields(*field_types.keys())
+        if "comment" in self.__dict__:
+            field_types["comment"] = [unicode, str]
+
+    def __repr__(self):
+        return "<{0} {1}: {2}>".format(
+            self.__class__.__name__,
+            'name' in self.__dict__ and self.name or "[undefined]",
+            'value' in self.__dict__ and self.value or "[undefined]")
+
+    def __eq__(self, other):
+        # not sure if this is logical, may need to take it out later
+        return other == self.value
+
+
 #------------------------------------------------------------------------------
 
 class HarContainer(MetaHar):
@@ -196,11 +241,11 @@ class HarContainer(MetaHar):
     def _construct(self):
         self.log = Log(self.log, self)
 
-    def validate(self): 
+    def validate(self):
         field_types = {"log": dict}
         self._has_fields("log")
         self._check_field_types(field_types)
-        
+
 #------------------------------------------------------------------------------
 
 
@@ -235,7 +280,7 @@ class Log(MetaHar):
                 self._get_printable_kids())
         except AttributeError:
             return "<Log object not fully initilized>"
-            
+
 
 #------------------------------------------------------------------------------
 
@@ -254,7 +299,7 @@ class Creator(MetaHar):
     def __repr__(self):
         return "<Created by {0}: {1}>".format(
             self.name, self._get_printable_kids())
-    
+
 
 #------------------------------------------------------------------------------
 
@@ -290,7 +335,7 @@ class Page(MetaHar):
         except Exception, e:
             raise ValidationError("Failed to parse date: {0}".format(e))
         self.pageTimings = PageTimings(self.pageTimings)
-    
+
     def __repr__(self):
         return "<Page with title '{0}': {1}>".format(
             self.title, self._get_printable_kids())
@@ -360,7 +405,7 @@ class Entry(MetaHar):
 
     def __repr__(self):
         return "<Entry object {0}>".format(self._get_printable_kids())
-            
+
 
 
 #------------------------------------------------------------------------------
@@ -393,12 +438,12 @@ class Request(MetaHar):
         if "cookies" in self.__dict__:
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
 
-        
+
 
     def __repr__(self):
         return "<Request to '{0}': {1}>".format(
             self.url,self._get_printable_kids())
-    
+
     def from_raw_req(self, req, proto='http', comment=''):
         # Raw request does not have proto info
         headers, body = req.split('\n\n')
@@ -420,7 +465,7 @@ class Request(MetaHar):
         if self.cookies:
             r += "Cookies: " + "&".join( "%(name)s: %(value)s" % c
                                          for c in self.cookies)
-        
+
         return r
 
 
@@ -483,10 +528,11 @@ class Cookie(MetaHar):
         self._check_field_types(field_types)
 
     def _construct(self):
-        try:
-            self.expires = parser.parse(self.expires)
-        except Exception, e:
-            raise ValidationError("Failed to parse date: {0}".format(e))
+        if "expires" in self:
+            try:
+                self.expires = parser.parse(self.expires)
+            except Exception, e:
+                raise ValidationError("Failed to parse date: {0}".format(e))
 
     def __repr__(self):
         return "<Cookie {0} set to {1}: {2}>".format(
@@ -495,22 +541,16 @@ class Cookie(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Header(MetaHar):
+class Header(KeyValueHar):
+    pass
 
-    def __repr__(self):
-        return "<{0} {1}: {2}>".format(
-            self.__class__.__name__,
-            'name' in self.__dict__ and self.name or "[undefined]",
-            'value' in self.__dict__ and self.value or "[undefined]")
-
-        
 
 
 
 #------------------------------------------------------------------------------
 
 
-class QueryString(MetaHar):
+class QueryString(KeyValueHar):
     pass
 
 
@@ -519,7 +559,7 @@ class QueryString(MetaHar):
 
 class PostData(MetaHar):
 
-        def validate(self): 
+        def validate(self):
             field_types = {"mimeType":[unicode, str],
                            "params":list,
                            "text":[unicode, str]}
@@ -536,7 +576,7 @@ class PostData(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Param(MetaHar):
+class Param(KeyValueHar):
 
     def validate(self): #default behavior
         field_types = {"name":[unicode, str]}
@@ -546,6 +586,9 @@ class Param(MetaHar):
                 field_types[field] = [unicode, str]
         self._check_field_types(field_types)
 
+    def _construct(self):
+        if not "value" in __self__:
+            self.value = None
 
 #------------------------------------------------------------------------------
 
@@ -558,7 +601,7 @@ class Content(MetaHar):
         field_defs = {"size":int,
                       "mimeType":[unicode, str]}
         if "compression" in self.__dict__:
-            field_types["compression"] = int            
+            field_types["compression"] = int
         for field in ["text", "encoding", "comment"]:
             if field in self.__dict__:
                 field_types[field] = [unicode, str]
@@ -583,7 +626,7 @@ class Cache(MetaHar):
             if field in self.__dict__:
                 self.__dict__[field] = RequestCache(
                     self.__dict__.get(field)) #what am I doing.....
-    
+
     def __repr__(self):
         return "<Cache: {0}>".format(
             self._get_printable_kids())
@@ -596,7 +639,7 @@ class RequestCache(MetaHar):
         field_types = {"lastAccess":[unicode, str],
                        "eTag":[unicode, str],
                        "hitCount": int}
-        self._has_fields(*field_types.keys())            
+        self._has_fields(*field_types.keys())
         if "expires" in self.__dict__:
             field_types["expires"] = [unicode, str]
         if "comment" in self.__dict__:
@@ -605,7 +648,7 @@ class RequestCache(MetaHar):
 
         #needs  __repr__
 
-#------------------------------------------------------------------------------    
+#------------------------------------------------------------------------------
 
 class Timings(MetaHar):
 
@@ -616,13 +659,13 @@ class Timings(MetaHar):
         field_defs = {"send":int,
                       "wait":int,
                       "receive":int}
-        
+
         self._check_field_types(field_defs)
 
     def __repr__(self):
         return "<Timings: {0}>".format(
             self._get_printable_kids())
-    
+
 
 ###############################################################################
 # Main
@@ -630,10 +673,6 @@ class Timings(MetaHar):
 
 
 if __name__ == "__main__":
-    har = HarContainer()
-    #har.from_har_file(os.path.expanduser('~/tmp/demo.har'))
-    fd = open(os.path.expanduser('./demo.har'))
-    har.from_json(fd.read())
+    fd = open(os.path.expanduser('~/tmp/demo.har'))
+    har = HarContainer(fd)
     fd.close()
-                  
-
