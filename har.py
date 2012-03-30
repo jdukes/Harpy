@@ -464,12 +464,10 @@ class Request(MetaHar):
         r = "%(method)s %(url)s HTTP/%(httpVersion)s\n" % self.__dict__
         if self.headers:
             #these may need to be capitalized. should be fixed in spec.
-            r += "\n".join( "%(name)s: %(value)s" % h
+            r += "\r\n".join( h.name + ": "+ h.value
                             for h in self.headers)
-            r += "\n"
-        if self.cookies:
-            r += "Cookies: " + "&".join( "%(name)s: %(value)s" % c
-                                         for c in self.cookies)
+        r += "\r\n"*2
+        
 
         return r
 
