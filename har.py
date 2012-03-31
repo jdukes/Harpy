@@ -461,24 +461,25 @@ class Request(MetaHar):
 
     def puke(self):
         #this may not work...
-        r = "%(method)s %(url)s HTTP/%(httpVersion)s\n" % self.__dict__
+        r = "%(method)s %(url)s %(httpVersion)s\r\n" % self.__dict__
         if self.headers:
             #these may need to be capitalized. should be fixed in spec.
             r += "\r\n".join( h.name + ": "+ h.value
                             for h in self.headers)
+            r += "\r\n"
         body = ''
         if 'postData' in self and self.postData:
             if not "Content-Type" in self.headers:
-                r += "Content-Type: {0}".format(self.postData.mimeType)
-            joined_params = "&".join( p.name + "="+ p.value
+                r += "Content-Type: {0}\r\n".format(self.postData.mimeType)
+            joined_params = "&".join( p.name + (p.value and ("="+ p.value))
                                       for p in self.postData.params)
             body = self.postData.text or joined_params
             if not "Content-Length" in self.headers:
-                r += "Content-Length: {0}".format(len(body))
-        r += "\r\n"*2
+                r += "Content-Length: {0}\r\n".format(len(body))
+        r += "\r\n"
         r += body
-        #     r += "\r\n".join( h.name + ": "+ h.value
-        #                     for h in self.params)
+        if body:
+            r += "\r\n"
         return r
 
 
