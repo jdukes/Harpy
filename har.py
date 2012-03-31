@@ -4,7 +4,7 @@ import json
 from StringIO import StringIO
 from socket import inet_pton, AF_INET6, AF_INET #used to validate ip addresses
 from socket import error as socket_error #used to validate ip addresses
-import os #used for testing, get rid of this later
+from urllib2 import urlopen
 from dateutil import parser
 from datetime import datetime
 
@@ -133,7 +133,7 @@ class MetaHar(object):
         return self.to_json()
 
     def __repr__(self):
-        return "<{0} {1} ({2})>".format(
+        return "<{0} {1} {2}>".format(
             self.__class__.__name__,
             'name' in self.__dict__ and self.name or "[undefined]",
             self._get_printable_kids())
@@ -436,11 +436,11 @@ class Request(MetaHar):
         if "headers" in self.__dict__:
             self.headers = [ Header(header) for header in self.headers]
             if all('_sequence' in header for header in self.headers):
-                self.header.sort(key=lambda i: i._sequence)
+                self.headers.sort(key=lambda i: i._sequence)
         if "cookies" in self.__dict__:
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
             if all('_sequence' in cookie for cookie in self.cookies):
-                self.cookie.sort(key=lambda i: i._sequence)
+                self.cookies.sort(key=lambda i: i._sequence)
 
     def __repr__(self):
         return "<Request to '{0}': {1}>".format(
@@ -456,19 +456,29 @@ class Request(MetaHar):
         bodySize = len(body)
         #post
 
-    def puke(self):
-        return self.render()
-
     def render(self):
+        return self.puke()
+
+    def puke(self):
         #this may not work...
         r = "%(method)s %(url)s HTTP/%(httpVersion)s\n" % self.__dict__
         if self.headers:
             #these may need to be capitalized. should be fixed in spec.
             r += "\r\n".join( h.name + ": "+ h.value
                             for h in self.headers)
+        body = ''
+        if 'postData' in self and self.postData:
+            if not "Content-Type" in self.headers:
+                r += "Content-Type: {0}".format(self.postData.mimeType)
+            joined_params = "&".join( p.name + "="+ p.value
+                                      for p in self.postData.params)
+            body = self.postData.text or joined_params
+            if not "Content-Length" in self.headers:
+                r += "Content-Length: {0}".format(len(body))
         r += "\r\n"*2
-        
-
+        r += body
+        #     r += "\r\n".join( h.name + ": "+ h.value
+        #                     for h in self.params)
         return r
 
 
@@ -548,8 +558,6 @@ class Header(KeyValueHar):
     pass
 
 
-
-
 #------------------------------------------------------------------------------
 
 
@@ -574,6 +582,8 @@ class PostData(MetaHar):
         def _construct(self):
             if "params" in self.__dict__:
                 self.params = [ Param(param) for param in self.params]
+                if all('_sequence' in param for param in self.params):
+                    self.params.sort(key=lambda i: i._sequence)
 
 
 #------------------------------------------------------------------------------
@@ -590,8 +600,15 @@ class Param(KeyValueHar):
         self._check_field_types(field_types)
 
     def _construct(self):
-        if not "value" in __self__:
+        if not "value" in self:
             self.value = None
+
+    def __repr__(self):
+        return "<{0} {1}: {2}>".format(
+            self.__class__.__name__,
+            'name' in self.__dict__ and self.name or "[undefined]",
+            self._get_printable_kids())
+
 
 #------------------------------------------------------------------------------
 
@@ -620,6 +637,7 @@ class Content(MetaHar):
 class Cache(MetaHar):
 
     def validate(self):
+        field_types={}
         if "comment" in self.__dict__:
             field_types["comment"] = [unicode, str]
         self._check_field_types(field_types)
@@ -649,7 +667,7 @@ class RequestCache(MetaHar):
             field_types["comment"] = [unicode, str]
         self._check_field_types(field_types)
 
-        #needs  __repr__
+        #!!!needs  __repr__
 
 #------------------------------------------------------------------------------
 
@@ -676,6 +694,6 @@ class Timings(MetaHar):
 
 
 if __name__ == "__main__":
-    fd = open(os.path.expanduser('~/tmp/demo.har'))
-    har = HarContainer(fd)
-    fd.close()
+    #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/espn.har').read())
+    #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
+    har = HarContainer(open('/home/jdukes/tmp/demo.har').read())
