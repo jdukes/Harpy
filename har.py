@@ -90,6 +90,14 @@ class HarEncoder(json.JSONEncoder):
 
 
 ###############################################################################
+# stream deserializer (pipe handler)
+###############################################################################
+
+
+#def mario(
+
+
+###############################################################################
 # HAR Classes
 ###############################################################################
 
@@ -372,19 +380,19 @@ class Entry(MetaHar):
                          "response",
                          "cache",
                          "timings")
-        if "pageref" in self.__dict__:
+        if "pageref" in self:
             field_defs["pageref"] = [unicode, str]
-        if "serverIPAddress" in self.__dict__:
+        if "serverIPAddress" in self:
             field_defs["serverIPAddress"] = [unicode, str]
-        if "connection" in self.__dict__:
+        if "connection" in self:
             field_defs["connection"] = [unicode, str]
         self._check_field_types(field_defs)
-        # if "pageref" in self.__dict__:
-        #     for entry in self.parent.entries:
-        #         if entry.pageref == self.pageref:
-        #             raise ValidationError("Entry pageref {0} must be uniq, "
-        #                                   "but it is not".format(self.pageref))
-        if "serverIPAddress" in self.__dict__:
+        if "pageref" in self and "_parent" in self.__dict__ and self._parent:
+            for entry in self._parent.entries: #write a test case for this
+                if entry.pageref == self.pageref:
+                    raise ValidationError("Entry pageref {0} must be uniq, "
+                                          "but it is not".format(self.pageref))
+        if "serverIPAddress" in self:
             try:
                 inet_pton(AF_INET6, self.serverIPAddress) #think of the future
             except socket_error:
@@ -394,8 +402,6 @@ class Entry(MetaHar):
                     raise ValidationError("Invalid IP address {0}: "
                                           "Address does not seem to be either "
                                           "IP4 or IP6".format(self.serverIPAddress))
-        #if "connection" in self.__dict__:
-            #verify is uniq
 
     def _construct(self):
         self.request = Request(self.request)
@@ -405,7 +411,6 @@ class Entry(MetaHar):
 
     def __repr__(self):
         return "<Entry object {0}>".format(self._get_printable_kids())
-
 
 
 #------------------------------------------------------------------------------
@@ -516,11 +521,11 @@ class Response(MetaHar):
             self.status, self.statusText, self._get_printable_kids())
 
     def _construct(self):
-        if "postData" in self.__dict__:
+        if "postData" in self:
             self.postData = PostData(self.postData)
-        if "headers" in self.__dict__:
+        if "headers" in self:
             self.headers = [ Header(header) for header in self.headers]
-        if "cookies" in self.__dict__:
+        if "cookies" in self:
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
 
 
