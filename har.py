@@ -7,6 +7,7 @@ from socket import error as socket_error #used to validate ip addresses
 from urllib2 import urlopen
 from dateutil import parser
 from datetime import datetime
+from base64 import b64encode 
 
 ##############################################################################
 # Static Definitions
@@ -112,10 +113,10 @@ class MetaHar(object):
         """ Needs documentation
         """
         self._parent = parent
-        assert type(init_from) in [unicode, str, file, dict], \
-               ("A har can only be initialized from a string, "
-                "file object, or dict")
         if init_from:
+            assert type(init_from) in [unicode, str, file, dict], \
+                   ("A har can only be initialized from a string, "
+                    "file object, dict")
             if type(init_from) in [unicode, str, file]:
                 if type(init_from) == unicode or type(init_from) == str:
                     fd = StringIO(init_from)
@@ -449,24 +450,77 @@ class Request(MetaHar):
 
     def __repr__(self):
         return "<Request to '{0}': {1}>".format(
-            self.url,self._get_printable_kids())
+            ("url" in self and self.url) or  "[undefined]",
+            self._get_printable_kids())
 
-    def devour(self, req, proto='http', comment=''):
+    def devour(self, req, proto='http', comment='',keep_b64_raw=True):
         # Raw request does not have proto info
-        headers, body = req.split('\n\n')
-        headers = headers.split('\n')
-        method, path, httpVersion = headers[0].split()
-        url = '%s://%s/%s' % ( proto, host, path)
+        self._b64_raw_req = b64encode(req) #just to be sure we're
+                                           #keeping a copy of the raw
+                                           #request by default. This
+                                           #is a person extension to
+                                           #the spec.
+        headers, body = req.split('\r\n\r\n')
         headerSize = len(headers)
         bodySize = len(body)
-        #post
+        headers = headers.split('\r\n')
+        method, path, httpVersion = headers[0].split()
+        postData = None
+        if method == "POST" or bodySize:
+            postData = {"params":[],
+                        "mimeType":"",
+                        "text":""}
+        seq = 0
+        self.headers = []
+        for header in headers[1:]:
+            header = dict(zip(["name", "value"], header.split(': ')))
+            #length should be calculated for each request unless
+            #explicitly set.
+            #!!! remember to note this in docs so it's no suprise.
+            if header["name"] == "Content-Length":
+                continue
+            if header["name"] == "Content-Type":
+                postData["mimeType"] = header["value"]
+                continue
+            if header["name"] == "Host":
+                url = '{0}://{1}{2}'.format( proto, header["value"], path)
+            header["_sequence"] = seq
+            self.headers.append(Header(header))
+            seq += 1
+        self.method = method
+        self.url = url
+        self.httpVersion = httpVersion
+        self.headerSize = headerSize
+        self.bodySize = bodySize
+        if postData:
+            if postData["mimeType"] == "application/x-www-form-urlencoded":
+                seq = 0
+                body = body.strip()
+                for param in body.split('&'):
+                    if "=" in param:
+                        name, value = param.split('=')
+                    else:
+                        name = param
+                        value = ""
+                    param = {"name": name, "value": value} # build unit test for empty values
+                    param["_sequence"] = seq
+                    postData["params"].append(param)
+                    seq += 1
+            else:
+                postData["text"] = body
+            self.postData = PostData(postData)
 
     def render(self):
         return self.puke()
 
     def puke(self):
-        #this may not work...
-        r = "%(method)s %(url)s %(httpVersion)s\r\n" % self.__dict__
+        for node in ["url", "httpVersion", "headers"]:
+            assert node in self, \
+                   "Cannot render request with unspecified {0}".format(node)
+        path = '/' + '/'.join(self.url.split("/")[3:]) #this kind of sucks....
+        r = "{0} {1} {2}\r\n".format(self.method, path, self.httpVersion)
+        #!!! not always clear in code where to use self vs self.__dict__
+        #!!! need to fix things so always use one or the other, or is clear
         if self.headers:
             #these may need to be capitalized. should be fixed in spec.
             r += "\r\n".join( h.name + ": "+ h.value
@@ -528,6 +582,7 @@ class Response(MetaHar):
         if "cookies" in self:
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
 
+    
 
 #------------------------------------------------------------------------------
 
