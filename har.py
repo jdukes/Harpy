@@ -466,42 +466,43 @@ class Request(MetaHar):
                                                #default. This is a
                                                #person extension to
                                                #the spec.
-        headers, body = req.split('\r\n\r\n')
-        headerSize = len(headers)
-        bodySize = len(body)
-        headers = headers.split('\r\n')
-        method, path, httpVersion = headers[0].split()
+        req = StringIO(req)
+        method, path, httpVersion = req.next().strip().split()
+        self.method = method
+        self.httpVersion = httpVersion
+        self.bodySize = 0
+        self.headers = []
         postData = None
-        if method == "POST" or bodySize:
+        if method == "POST":
             postData = {"params":[],
                         "mimeType":"",
                         "text":""}
         seq = 0
-        self.headers = []
-        for header in headers[1:]:
+        for header in req:
+            header = header.strip()
+            if not header:
+                break
             header = dict(zip(["name", "value"], header.split(': ')))
             #length should be calculated for each request unless
             #explicitly set.
             #!!! remember to note this in docs so it's no suprise.
             if header["name"] == "Content-Length":
+                self.bodySize = header["value"]
                 continue
             if header["name"] == "Content-Type":
                 postData["mimeType"] = header["value"]
                 continue
             if header["name"] == "Host":
-                url = '{0}://{1}{2}'.format( proto, header["value"], path)
+                self.url = '{0}://{1}{2}'.format(proto, header["value"], path)
             header["_sequence"] = seq
             self.headers.append(Header(header))
             seq += 1
-        self.method = method
-        self.url = url
-        self.httpVersion = httpVersion
-        self.headerSize = headerSize
-        self.bodySize = bodySize
+        headerSize = req.tell()
+        seq = 0
         if postData:
+            body = req.read(int(self.bodySize))
             if postData["mimeType"] == "application/x-www-form-urlencoded":
                 seq = 0
-                body = body.strip()
                 for param in body.split('&'):
                     if "=" in param:
                         name, value = param.split('=')
