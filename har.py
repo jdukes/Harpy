@@ -9,7 +9,7 @@ from socket import error as socket_error #used to validate ip addresses
 from urllib2 import urlopen
 from dateutil import parser
 from datetime import datetime
-from base64 import b64encode
+from base64 import b64encode, b64decode
 
 ##############################################################################
 # Static Definitions
@@ -62,7 +62,7 @@ class MissingValueExcpetion(Exception):
         self.in_class = in_class
 
     def __str__(self):
-        return ('Field "{0}" missing from json while trying to instantiate {1}'
+        return ('Field "{0}" missing from input while trying to instantiate "{1}"'
                 .format(
                     self.value,
                     self.in_class))
@@ -495,6 +495,7 @@ class Request(MetaHar):
             if header["name"] == "Host":
                 self.url = '{0}://{1}{2}'.format(proto, header["value"], path)
             header["_sequence"] = seq
+            print header
             self.headers.append(Header(header))
             seq += 1
         headerSize = req.tell()
@@ -578,8 +579,11 @@ class Response(MetaHar):
         self._check_field_types(field_defs)
 
     def __repr__(self):
-        return "<Response with code {0} - '{1}': {2}>".format(
-            self.status, self.statusText, self._get_printable_kids())
+        # I need to make the naming thing a function....
+        return "<Response with code '{0}' - '{1}': {2}>".format(
+            ("status" in self and self.status ) or "[undefined]",
+            ("statusText" in self and self.statusText) or "[undefined]",
+            self._get_printable_kids())
 
     def _construct(self):
         if "postData" in self:
@@ -589,7 +593,7 @@ class Response(MetaHar):
         if "cookies" in self:
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
 
-    def devour(self, req, proto='http', comment='', keep_b64_raw=True):
+    def devour(self, res, proto='http', comment='', keep_b64_raw=True):
         # Raw request does not have proto info
         if keep_b64_raw:
             self._b64_raw_req = b64encode(req) #just to be sure we're
@@ -598,8 +602,48 @@ class Response(MetaHar):
                                                #default. This is a
                                                #person extension to
                                                #the spec.
-        headers, body = req.split('\r\n\r\n')
-
+        res = StringIO(res)
+        httpVersion, status, statusText  = res.next().strip().split()
+        self.status = status
+        self.statusText = statusText
+        self.httpVersion = httpVersion
+        self.bodySize = 0
+        self.headers = []
+        self.cookies = []
+        seq = 0
+        encoding = None
+        content = {"size":0,
+                   "mimeType":""}
+        for line in res:
+            line = line.strip()
+            if not line:
+                break
+            header = dict(zip(["name", "value"], line.strip().split(': ')))
+            if header["name"] == "Content-Length":
+                self.bodySize = header["value"]
+                continue
+            elif header["name"] == "Content-Type":
+                # will need to keep an eye out for content type and encoding
+                content["mimeType"] = header["value"]
+                continue
+            elif header["name"] == "Content-Encoding":
+                encoding = content["encoding"] = "base64" # for right now if we see something that's encoded we'll base64 it so it's portable
+            elif header["name"] == "Host":
+                self.url = '{0}://{1}{2}'.format(proto, header["value"], path)
+            elif header["name"] == "Location":
+                self.redirectURL = header["value"]
+            elif header["name"] == "Set-Cookie":
+                cookie = Cookie()
+                cookie.devour(line.strip())
+                self.cookies.append(cookie)
+            header["_sequence"] = seq
+            self.headers.append(Header(header))
+            seq += 1
+        self.headerSize = res.tell()
+        content["text"] = res.read(int(self.bodySize))
+        if encoding:
+            content["text"] = b64encode(content["text"])
+        self.content = Content(content)
 
     def render(self):
         return self.puke()
@@ -633,8 +677,30 @@ class Cookie(MetaHar):
                 raise ValidationError("Failed to parse date: {0}".format(e))
 
     def __repr__(self):
-        return "<Cookie {0} set to {1}: {2}>".format(
-            self.name, self.value, self._get_printable_kids())
+        return "<Cookie '{0}' set to '{1}': {2}>".format(
+            ("name" in self and self.name) or "[undefined]",
+            ("name" in self and self.value) or "[undefined]",
+            self._get_printable_kids())
+
+    def devour(self, cookie_string):
+        #need a unit test for this
+        header, cookie = cookie_string.split(': ')
+        assert header == 'Set-Cookie', \
+               "Cookies must be devoured one at a time."
+        values = cookie.split('; ')
+        self.name, self.value = values[0].split('=')
+        if len(values) == 1:
+            return
+        for attr in values[1:]:
+            if '=' in attr:
+                name, value = attr.split('=')
+                self.__dict__[name.lower()] = value
+            else:
+                if attr == "Secure":
+                    self.secure = True
+                elif attr  == "HttpOnly":
+                    self.httpOnly = True
+            
 
 #------------------------------------------------------------------------------
 
@@ -703,14 +769,14 @@ class Content(MetaHar):
     def validate(self):
         self._has_fields("size",
                          "mimeType")
-        field_defs = {"size":int,
+        field_types = {"size":int,
                       "mimeType":[unicode, str]}
         if "compression" in self.__dict__:
             field_types["compression"] = int
         for field in ["text", "encoding", "comment"]:
             if field in self.__dict__:
                 field_types[field] = [unicode, str]
-        self._check_field_types(field_defs)
+        self._check_field_types(field_types)
 
     def __repr__(self):
         return "<Content {0}>".format(self.mimeType)
@@ -782,3 +848,4 @@ if __name__ == "__main__":
     #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/espn.har').read())
     #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
     hc = HarContainer(open('/home/jdukes/tmp/demo.har').read())
+
