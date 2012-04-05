@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# todo: write unit tests
+#       run lint/pep8 checks
 
 import json
 from StringIO import StringIO
@@ -7,7 +9,7 @@ from socket import error as socket_error #used to validate ip addresses
 from urllib2 import urlopen
 from dateutil import parser
 from datetime import datetime
-from base64 import b64encode 
+from base64 import b64encode
 
 ##############################################################################
 # Static Definitions
@@ -46,6 +48,7 @@ METHODS = ["OPTIONS",
            "PATCH",
            "SEARCH",
            "ARBITRARY"]
+
 
 ###############################################################################
 # Exceptions
@@ -369,6 +372,7 @@ class PageTimings(MetaHar):
         return "<Page timing : {0}>".format(
             self._get_printable_kids())
 
+
 #------------------------------------------------------------------------------
 
 
@@ -453,13 +457,15 @@ class Request(MetaHar):
             ("url" in self and self.url) or  "[undefined]",
             self._get_printable_kids())
 
-    def devour(self, req, proto='http', comment='',keep_b64_raw=True):
+    def devour(self, req, proto='http', comment='', keep_b64_raw=True):
         # Raw request does not have proto info
-        self._b64_raw_req = b64encode(req) #just to be sure we're
-                                           #keeping a copy of the raw
-                                           #request by default. This
-                                           #is a person extension to
-                                           #the spec.
+        if keep_b64_raw:
+            self._b64_raw_req = b64encode(req) #just to be sure we're
+                                               #keeping a copy of the
+                                               #raw request by
+                                               #default. This is a
+                                               #person extension to
+                                               #the spec.
         headers, body = req.split('\r\n\r\n')
         headerSize = len(headers)
         bodySize = len(body)
@@ -582,7 +588,24 @@ class Response(MetaHar):
         if "cookies" in self:
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
 
-    
+    def devour(self, req, proto='http', comment='', keep_b64_raw=True):
+        # Raw request does not have proto info
+        if keep_b64_raw:
+            self._b64_raw_req = b64encode(req) #just to be sure we're
+                                               #keeping a copy of the
+                                               #raw request by
+                                               #default. This is a
+                                               #person extension to
+                                               #the spec.
+        headers, body = req.split('\r\n\r\n')
+
+
+    def render(self):
+        return self.puke()
+
+    def puke(self):
+        pass
+
 
 #------------------------------------------------------------------------------
 
@@ -757,4 +780,4 @@ class Timings(MetaHar):
 if __name__ == "__main__":
     #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/espn.har').read())
     #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
-    har = HarContainer(open('/home/jdukes/tmp/demo.har').read())
+    hc = HarContainer(open('/home/jdukes/tmp/demo.har').read())
