@@ -112,7 +112,7 @@ class MetaHar(object):
     # this needs to be a tree so child objects can validate that they
     # are uniq children
 
-    def __init__(self, init_from=None, parent=None):
+    def __init__(self, init_from=None, parent=None, set_defualts=True):
         """ Needs documentation
         """
         self._parent = parent
@@ -129,6 +129,8 @@ class MetaHar(object):
                 fd.close()
             else:
                 self.from_dict(init_from)
+        elif set_defualts:
+            self.set_defaults()
 
     def __iter__(self):
         return (v for k,v in self.__dict__.iteritems()
@@ -187,6 +189,15 @@ class MetaHar(object):
     def _construct(self):
         #when constructing child objects, pass self so parent hierachy
         #can exist
+        pass
+
+    def set_defaults(self):
+        """H.set_defaults() -> None
+
+        In general this method sets defaults for objects not
+        instantiated via 'init_from' if 'set_defaults' parameter is
+        not set to False. It can also be used to reset a har to a
+        default state."""
         pass
 
     def to_json(self):
@@ -452,6 +463,21 @@ class Request(MetaHar):
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
             if all('_sequence' in cookie for cookie in self.cookies):
                 self.cookies.sort(key=lambda i: i._sequence)
+
+    def set_defaults(self):
+        self.from_dict({"cookies": [],
+                        "url": "http://example.com/",
+                        "queryString": [],
+                        "headers": [{"name": "Accept", "value": "*/*"},
+                                    {"name": "Accept-Language", "value": "en-US"},
+                                    {"name": "Accept-Encoding", "value": "gzip"},
+                                    {"name": "User-Agent", "value":
+                                     ("Har.py (if you see this in your logs,"
+                                      "someone made a mistake)")}],
+                        "headersSize": 145,
+                        "bodySize": -1,
+                        "method": "GET",
+                        "httpVersion": "HTTP/1.1"})
 
     def __repr__(self):
         return "<Request to '{0}': {1}>".format(
