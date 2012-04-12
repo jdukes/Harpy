@@ -533,7 +533,9 @@ class Request(MetaHar):
                 seq = 0
                 for param in body.split('&'):
                     if "=" in param:
-                        name, value = param.split('=')
+                        param = param.split('=') #fuck
+                        name = param[0] # fuck fuck
+                        value = '='.join(param[1:]) #fuck fuck fuck
                     else:
                         name = param
                         value = ""
