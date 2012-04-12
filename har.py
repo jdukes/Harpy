@@ -267,7 +267,7 @@ class HarContainer(MetaHar):
 
     def validate(self):
         field_types = {"log": dict}
-        self._has_fields("log")
+        self._has_fields(*field_types.keys())
         self._check_field_types(field_types)
 
 #------------------------------------------------------------------------------
@@ -856,13 +856,10 @@ class RequestCache(MetaHar):
 class Timings(MetaHar):
 
     def validate(self):
-        self._has_fields("send",
-                         "wait",
-                         "receive")
         field_defs = {"send":int,
                       "wait":int,
                       "receive":int}
-
+        self._has_fields(*field_defs.keys())
         self._check_field_types(field_defs)
 
     def __repr__(self):
