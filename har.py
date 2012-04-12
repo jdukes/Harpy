@@ -171,7 +171,8 @@ class MetaHar(object):
         the method is called.
         """
         #dunno if I like this method... maybe should be a generator?
-        return [ v for k,v in self ]
+        return [ kid for kid in self ] # this comes from
+                                       # _get_printable_kids()
 
     def from_json(self, json_data):
         json_data = json.loads(json_data)
