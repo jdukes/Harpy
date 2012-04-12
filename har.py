@@ -717,7 +717,9 @@ class Cookie(MetaHar):
         assert header == 'Set-Cookie', \
                "Cookies must be devoured one at a time."
         values = cookie.split('; ')
-        self.name, self.value = values[0].split('=')
+        buf = values[0].split('=') # fuckidy
+        self.name = buf[0] #fuck
+        self.value = '='.join(buf[1:]) #fuck fuck
         if len(values) == 1:
             return
         for attr in values[1:]:
