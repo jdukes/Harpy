@@ -846,6 +846,6 @@ class Timings(MetaHar):
 
 if __name__ == "__main__":
     #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/espn.har').read())
-    #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
-    hc = HarContainer(open('/home/jdukes/tmp/demo.har').read())
+    hc = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
+    #hc = HarContainer(open('/home/jdukes/tmp/demo.har').read())
 
