@@ -9,6 +9,7 @@ except ImportError:
 	       "functionality to work")
 	raise
 from har import *
+from utils import mario
 import sys
 from urlparse import urlparse
 from datetime import datetime
@@ -92,7 +93,7 @@ def make_requests(g):
 if __name__=='__main__':
 
 	# Create a generator. List comprehension syntax is nice
-	taskgen = make_requests(mario(sys.stdin, Request))
+	taskgen = make_requests(mario.pull(Request))
 
 	# the debug() is a wrapper for run() which provides verbose error handling  
 	debug(taskgen)

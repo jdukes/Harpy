@@ -102,33 +102,6 @@ class HarEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-###############################################################################
-# pipe handler
-###############################################################################
-
-def mario(pipe, obj, mode=None):
-    #this does not belong in harpy proper... I need to figure out
-    #where else to put it.
-    """mario(pipe, obj, [mode=None]) -> g or None
-
-    If pipe.mode = 'r' or 'r+' then this is a request generator
-    that reads from stdin and outputs objects of the class 'obj'.
-
-    If pipe.mode = 'w' takes a generator 'obj' and writes to a pipe.
-
-    If mode is set mode is used.
-    """
-    mode = mode or pipe.mode
-    if 'r' in mode:
-        return (obj_class(line) for line in pipe)
-    elif mode == 'w':
-        for o in generator:
-            pipe.write(o + '\n')
-    else:
-        raise ModeNotSupported(mode)
-
-
-pipe_reader = mario
 
 
 ###############################################################################
