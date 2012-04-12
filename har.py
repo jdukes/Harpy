@@ -68,6 +68,15 @@ class MissingValueExcpetion(Exception):
                     self.in_class))
 
 
+class ModeNotSupported(Exception):
+
+    def __init__(self, mode):
+        self.mode = mode
+
+    def __str__(self):
+        return str("Mode %s not supported" % self.mode)
+
+
 class ValidationError(Exception):
 
     def __init__(self, msg):
@@ -94,11 +103,32 @@ class HarEncoder(json.JSONEncoder):
 
 
 ###############################################################################
-# stream deserializer (pipe handler)
+# pipe handler
 ###############################################################################
 
+def mario(pipe, obj, mode=None):
+    #this does not belong in harpy proper... I need to figure out
+    #where else to put it.
+    """mario(pipe, obj, [mode=None]) -> g or None
 
-#def mario(
+    If pipe.mode = 'r' or 'r+' then this is a request generator
+    that reads from stdin and outputs objects of the class 'obj'.
+
+    If pipe.mode = 'w' takes a generator 'obj' and writes to a pipe.
+
+    If mode is set mode is used.
+    """
+    mode = mode or pipe.mode
+    if 'r' in mode:
+        return (obj_class(line) for line in pipe)
+    elif mode == 'w':
+        for o in generator:
+            pipe.write(o + '\n')
+    else:
+        raise ModeNotSupported(mode)
+
+
+pipe_reader = mario
 
 
 ###############################################################################

@@ -1,6 +1,13 @@
 #!/usr/bin/python
 
-from blackmamba import *
+try:
+	from blackmamba import *
+except ImportError:
+	print ("Request engine is based on blackmamba. "
+	       "git clone http://github.com/rootfoo/blackmamba "
+	       "and follow installation instructions for this "
+	       "functionality to work")
+	raise
 from har import *
 import sys
 from urlparse import urlparse
@@ -62,8 +69,7 @@ def process(request):
 		# do something with Response object
 		#print raw_response
 		response.devour(raw_response)
-		print response.status
-		print response._timings
+		print response #fuck... I need this to work differently
 
 		# close the connection
 		yield close()
@@ -79,17 +85,14 @@ def get_time_delta(start):
 	return duration
 
 
-def request_gen():
-	"""Request generator that reads from stdin"""
-	for line in sys.stdin:
-		yield Request(line)
-
+def make_requests(g):
+	return (process(request) for request in g)
 
 
 if __name__=='__main__':
 
 	# Create a generator. List comprehension syntax is nice
-	taskgen = (process(request) for request in request_gen())
+	taskgen = make_requests(mario(sys.stdin, Request))
 
 	# the debug() is a wrapper for run() which provides verbose error handling  
 	debug(taskgen)
