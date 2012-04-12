@@ -479,6 +479,27 @@ class Request(MetaHar):
                         "method": "GET",
                         "httpVersion": "HTTP/1.1"})
 
+    def set_header(self, name, value):
+        """Req.set_header(name, value) -> None
+
+        Sets a header to a specific value. NOTE: This operates by
+        rebuilding the header list so if two headers have the same
+        name they will both be removed and replaced with the new one
+        """
+        #this sucks and is a horrible way to do things.
+        #also doens't take in to account sequence.. fuck
+        try:
+            headers = [ header for header in self.headers
+                        if not header.name == name ]
+            h = [ header for header in self.headers
+                        if header.name == name ][0]
+            h.value = value
+        except:
+            pass
+        else:
+            h = Header({"name":name,"value":value})
+        headers.append(h)
+
     def __repr__(self):
         return "<Request to '{0}': {1}>".format(
             ("url" in self and self.url) or  "[undefined]",

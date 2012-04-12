@@ -1,6 +1,12 @@
 * TODO
 
 * general notes
+** change package layout
+*** harpy
+**** __init__.py
+**** har.py
+**** utils/
+***** <utils>
 ** extend har with _sequence _serverIPAddress
 ** objects will be able to be instantiated in different ways but will all return either a har request or har response object
 ** har should be able to create a har object from a har file, har stream, a http file, or http stream
