@@ -623,7 +623,7 @@ class Response(MetaHar):
     def devour(self, res, proto='http', comment='', keep_b64_raw=True):
         # Raw request does not have proto info
         if keep_b64_raw:
-            self._b64_raw_req = b64encode(req) #just to be sure we're
+            self._b64_raw_req = b64encode(res) #just to be sure we're
                                                #keeping a copy of the
                                                #raw request by
                                                #default. This is a
