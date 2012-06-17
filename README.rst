@@ -3,7 +3,7 @@ Harpy is a module for parsing HTTP Archive 1.2.
 More information on the HTTP Archive specification can be found here:
 http://www.softwareishard.com/blog/har-12-spec/
 
-There are some extensions made to the spec to gaurantee that the
+There are some extensions made to the spec to guarantee that the
 original request or response can be perfectly reconstructed from the
 object. It should always be the case that a request or response that
 is rendered in to an object using Harpy, can be rendered back from the
@@ -11,7 +11,7 @@ object to a raw request or response that is exactly the same as the
 original. Some libraries are lossy, Harpy is lossless. 
 
 This software is designed to be used for web testing, specifically
-security testing. Focus, therefore, has been placed on reproducability
+security testing. Focus, therefore, has been placed on reproducibility
 and quick parsing of large datasets.
 
 One of the design goals of this library is to make usage simple. This
@@ -19,7 +19,7 @@ code should work the way you think it would work. There are several
 ways to use Harpy and these will be different depending on the goal of
 the software using it.
 
-Constucting an object from scratch should be as easy as instantiating
+Constructing an object from scratch should be as easy as instantiating
 the object::
 
     In [0]: hc = HarContainer()
@@ -103,8 +103,8 @@ all URLs requested in a HAR::
      ...
      u'http://www.google.com/csi?v=foo']
 
-It is likewise trivial to search for items, or associte requests and
-responeses. For example, finding the response code for each url
+It is likewise trivial to search for items, or associate requests and
+responses. For example, finding the response code for each url
 requested if the url contains 'www.google.com' can be easily done::
 
     In [21]: [ (e.request.url, e.response.status) for e in hc.log.entries if 'www.google.com' in e.request.url ]
@@ -129,7 +129,7 @@ example from the with_val docstring::
 
 As development continues more functionality will be added. Currently
 Harpy is one project. In the future Harpy will be split in to
-Harpy-core and Harpy-utils. Harpy-core will be only the coe necessary
+Harpy-core and Harpy-utils. Harpy-core will be only the code necessary
 for implementing the HAR specification. Harpy-utils will be a set of
 additional modules and scripts that assist in testing, such as request
 repeaters and spiders.
