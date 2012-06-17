@@ -48,6 +48,50 @@ Out[6]: <Request to '[undefined]': (empty)>
 In [7]: print r
 {}
 
+A har object can also be initialized from a string of json, a file
+that contains json, or a dictionary:
+
+In [8]: r = Request(r'{"cookies": [], "url": "http://example.com/foobarbaz", "queryString": [], "headers": [{"name": "Accept", "value": "*/*"}, {"name": "Accept-Language", "value": "en-US"}, {"name": "Accept-Encoding", "value": "gzip"}, {"name": "User-Agent", "value": "Harpy (if you see this in your logs,someone made a mistake)"}], "headersSize": 145, "httpVersion": "HTTP/1.1", "method": "GET", "bodySize": -1}')
+
+In [9]: r
+Out[9]: <Request to 'http://example.com/foobarbaz': ('cookies', 'url', 'queryString', 'headers', 'httpVersion', 'method')>
+
+In [10]: hc = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
+
+In [11]: hc
+Out[11]: <HarContainer: ('log',)>
+
+In [12]: hc = HarContainer(open('./google.har'))
+
+In [13]: hc.log.entries[0].request
+Out[13]: <Request to 'http://www.google.com/': ('cookies', 'url', 'queryString', 'headers', 'httpVersion', 'method')>
+
+Some objects, such as requests and responses, can consumed from raw:
+
+In [14]: raw
+Out[14]: 'GET / HTTP/1.1\r\nHost: localhost:1234\r\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-us,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\n\r\n'
+
+In [15]: r = Request()
+
+In [16]: r.devour(raw)
+
+In [17]: r
+Out[17]: <Request to 'http://localhost:1234/': ('cookies', 'url', 'queryString', 'headers', 'method', 'httpVersion')>
+
+These objects can also be rendered back to raw:
+
+In [18]: r.puke()
+Out[18]: 'GET / HTTP/1.1\r\nHost: localhost:1234\r\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-us,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\n\r\n'
+
+For polite people there's an alias:
+
+In [19]: help(Request.render)
+Help on method render in module __main__:
+
+render(self) unbound __main__.Request method
+    Return a string that should be exactly equal to the
+    original request.
+
 
 
 It is intended that Harpy be self documenting. All information needed
@@ -575,6 +619,8 @@ class Request(MetaHar):
         """
         #this sucks and is a horrible way to do things.
         #also doens't take in to account sequence.. fuck
+        #
+        #there's a more pythonic way to do this....
         try:
             headers = [ header for header in self.headers
                         if not header.name == name ]
@@ -607,6 +653,7 @@ class Request(MetaHar):
         req = StringIO(req)
         #!!! this doesn't always happen
         method, path, httpVersion = req.next().strip().split()
+        #some people ignore the spec, this needs to be handled.
         self.method = method
         self.httpVersion = httpVersion
         self.bodySize = 0
@@ -645,9 +692,7 @@ class Request(MetaHar):
                 seq = 0
                 for param in body.split('&'):
                     if "=" in param:
-                        param = param.split('=') #fuck
-                        name = param[0] # fuck fuck
-                        value = '='.join(param[1:]) #fuck fuck fuck
+                        name, value = param.split('=',1) #fuck
                     else:
                         name = param
                         value = ""
@@ -660,9 +705,16 @@ class Request(MetaHar):
             self.postData = PostData(postData)
 
     def render(self):
+        """Return a string that should be exactly equal to the
+        originally consumed request."""
         return self.puke()
 
     def puke(self):
+        """Return a string that should be exactly equal to the
+        original request.
+
+        The 'render' method calls this method, it can be used instead
+        if you think your boss might yell at you."""        
         for node in ["url", "httpVersion", "headers"]:
             assert node in self, \
                    "Cannot render request with unspecified {0}".format(node)
@@ -800,7 +852,7 @@ class Response(MetaHar):
         return self.puke()
 
     def puke(self):
-        pass
+        pass #!!! need to implement
 
 
 #------------------------------------------------------------------------------
