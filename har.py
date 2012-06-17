@@ -48,10 +48,16 @@ To not set default values on object creation disable default settings::
     In [7]: print r
     {}
 
+Also notice that the `repr` of an object contains the most relevant
+information about the object. This is different depending on the
+object type, but it will always contain a list of the object's direct
+children. If there are no children, the child list will show as
+(empty).
+
 A har object can also be initialized from a string of json, a file
 that contains json, or a dictionary::
 
-     In [8]: r = Request(r'{"cookies": [], "url": "http://example.com/foobarbaz", "queryString": [], "headers": [{"name": "Accept", "value": "*/*"}, {"name": "Accept-Language", "value": "en-US"}, {"name": "Accept-Encoding", "value": "gzip"}, {"name": "User-Agent", "value": "Harpy (if you see this in your logs,someone made a mistake)"}], "headersSize": 145, "httpVersion": "HTTP/1.1", "method": "GET", "bodySize": -1}')
+     In [8]: r = Request(r'{"cookies": [], "url": "http://example.com/foobarbaz", ...)
      
      In [9]: r
      Out[9]: <Request to 'http://example.com/foobarbaz': ('cookies', 'url', 'queryString', 'headers', 'httpVersion', 'method')>
@@ -140,7 +146,6 @@ to use this module should be possible to gain from introspection. If
 it ever fails to be easy to use or well documented, please suggest
 improvements. If Harpy ever fails to be either lossless please file a
 bug report.
-
 
 """
 
