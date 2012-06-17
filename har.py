@@ -122,10 +122,10 @@ requested if the url contains 'www.google.com' can be easily done::
      (u'http://www.google.com/csi?v=foo', 204)]
 
 We can also use comprehensions to generate objects that can be used to
-make new requests. The with_val method makes this simple. Here is the
-example from the with_val docstring::
+make new requests. The replace method makes this simple. Here is the
+example from the replace docstring::
 
-    In [0]: [ r.with_val(url='http://foo.com/%d/user' % i)
+    In [0]: [ r.replace(url='http://foo.com/%d/user' % i)
                 for i in xrange(10) ]
     Out[0]: 
     [<Request to 'http://foo.com/0/user': ...
@@ -252,10 +252,10 @@ class HarEncoder(json.JSONEncoder):
             return dict( (k,v) for k,v in obj.__dict__.iteritems()
                          if k != "_parent" )
         if isinstance(obj, datetime):
-            return str(datetime) #!!!this isn't quite right, needs to be fixed
+            return obj.strftime('%Y-%m-%d%h:%m:%S.%s')
+            #according to the spec this needs to be ISO 8601
+            #YYY-MM-DDThh:mm:ss.sTZD
         return json.JSONEncoder.default(self, obj)
-
-
 
 
 ###############################################################################
@@ -321,7 +321,7 @@ class MetaHar(object):
                       or isinstance(v, str)))) or '(empty)'
 
 
-    def with_val(self, **kwarg):
+    def replace(self, **kwarg):
         """Return a copy of the object with a varabile set to a value.
 
         This is essentially __setattr__ except that it returns an
@@ -329,7 +329,7 @@ class MetaHar(object):
         method was added to make comprensions easier to write. The
         canonical use case is for sequencing:
 
-        In [0]: [ r.with_val(url='http://foo.com/%d/user' % i)
+        In [0]: [ r.replace(url='http://foo.com/%d/user' % i)
                     for i in xrange(10) ]
         Out[0]: 
         [<Request to 'http://foo.com/0/user': ...

@@ -121,10 +121,10 @@ requested if the url contains 'www.google.com' can be easily done::
      (u'http://www.google.com/csi?v=foo', 204)]
 
 We can also use comprehensions to generate objects that can be used to
-make new requests. The with_val method makes this simple. Here is the
-example from the with_val docstring::
+make new requests. The replace method makes this simple. Here is the
+example from the replace docstring::
 
-    In [0]: [ r.with_val(url='http://foo.com/%d/user' % i)
+    In [0]: [ r.replace(url='http://foo.com/%d/user' % i)
                 for i in xrange(10) ]
     Out[0]: 
     [<Request to 'http://foo.com/0/user': ...
