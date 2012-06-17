@@ -1,13 +1,60 @@
 #!/usr/bin/env python
-"""Har.py is a module for parsing HTTP Archive 1.2.
+"""Harpy is a module for parsing HTTP Archive 1.2.
+
+More information on the HTTP Archive specification can be found here:
 http://www.softwareishard.com/blog/har-12-spec/
 
-There are some extensions made to the spec to gaurantee the original
-state of the message. This software is designed to be used for web
-testing, specifically security testing. Focus, therefore, has been
-placed on reproducability and quick parsing of large datasets.
+There are some extensions made to the spec to gaurantee that the
+original request or response can be perfectly reconstructed from the
+object. It should always be the case that a request or response that
+is rendered in to an object using Harpy, can be rendered back from the
+object to a raw request or response that is exactly the same as the
+original. Some libraries are lossy, Harpy is lossless. 
+
+This software is designed to be used for web testing, specifically
+security testing. Focus, therefore, has been placed on reproducability
+and quick parsing of large datasets.
+
+One of the design goals of this library is to make usage simple. This
+code should work the way you think it would work. There are several
+ways to use Harpy and these will be different depending on the goal of
+the software using it.
+
+Constucting an object from scratch should be as easy as instantiating
+the object:
+
+In [0]: hc = HarContainer()
+
+In [1]: print hc
+{}
+
+In [2]: hc
+Out[2]: <HarContainer: (empty)>
+
+Some objects have default values which are pre-set:
+
+In [3]: r = Request()
+
+In [4]: r
+Out[4]: <Request to 'http://example.com/': ('cookies', 'url', 'queryString', 'headers', 'method', 'httpVersion')>
+
+To not set default values on object creation disable default settings:
+
+In [5]: r = Request(defaults=False)
+
+In [6]: r
+Out[6]: <Request to '[undefined]': (empty)>
+
+In [7]: print r
+{}
 
 
+
+It is intended that Harpy be self documenting. All information needed
+to use this module should be possible to gain from introspection. If
+it ever fails to be easy to use or well documented, please suggest
+improvements. If Harpy ever fails to be either lossless please file a
+bug report.
 """
 
 # todo: write unit tests
@@ -133,7 +180,7 @@ class MetaHar(object):
     # this needs to be a tree so child objects can validate that they
     # are uniq children
 
-    def __init__(self, init_from=None, parent=None, set_defualts=True):
+    def __init__(self, init_from=None, parent=None, defaults=True):
         """ Needs documentation
         """
         self._parent = parent
@@ -150,7 +197,7 @@ class MetaHar(object):
                 fd.close()
             else:
                 self.from_dict(init_from)
-        elif set_defualts:
+        elif defaults:
             self.set_defaults()
 
     def __iter__(self):
@@ -514,7 +561,7 @@ class Request(MetaHar):
                                     {"name": "Accept-Language", "value": "en-US"},
                                     {"name": "Accept-Encoding", "value": "gzip"},
                                     {"name": "User-Agent", "value":
-                                     ("Har.py (if you see this in your logs,"
+                                     ("Harpy (if you see this in your logs,"
                                       "someone made a mistake)")}],
                         "headersSize": 145,
                         "bodySize": -1,
