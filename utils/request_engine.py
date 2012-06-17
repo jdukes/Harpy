@@ -1,4 +1,15 @@
 #!/usr/bin/python
+#make this RequestGrinder
+#have a core Grinder class that can have different Engines
+
+#Instantiate a Grinder with an Engine (blackmamba if possible,
+#otherwise urllib2.
+
+#Grinder should support the methods load, grind
+#(exec basically), and dump
+
+#Pump class should just be a generator that takes a generator
+
 
 try:
 	from blackmamba import *
@@ -8,13 +19,17 @@ except ImportError:
 	       "and follow installation instructions for this "
 	       "functionality to work")
 	raise
-from har import *
-from utils import mario
+try:
+	from .har import Request, Response, Timings, Entry
+	from .utils import mario
+except ImportError:
+	from harpy.har import Request, Response, Timings, Entry
+	from harpy.utils import mario
 import sys
 from urlparse import urlparse
 from datetime import datetime
 
-def process(request):
+def process(request, outlist=None):
 
 	try:
 		# create the HTTP GET request from the URL
@@ -22,20 +37,23 @@ def process(request):
 		
 		# prepare response for late use
 		response = Response()
-		response._timings = Timings()
+		_timings = Timings()
+		_sequence = None
 		if '_sequence' in request:
-			response._sequence = request._sequence
+			_sequence = request._sequence
 		
-		# wanted to do something like this... or get from headers maybe?
-		#host = request.host
-		#port = request.post
-	
 		# but urlparse works too
 		urlp = urlparse(request.url)
 		host = urlp.hostname.strip()
-		default_port = 443 if urlp.scheme == 'https' else 80
+
+		if urlp.scheme == 'https':
+			default_port = 443
+			ssl = True
+		else:
+			default_port = 80
+			ssl = False
 		port = urlp.port if urlp.port else default_port
-	
+
 		# if the server IP address has been overridden, use that	
 		if '_serverIPAddress' in request:
 			host = request._serverIPAddress
@@ -43,25 +61,27 @@ def process(request):
 		# else resolve the hostname
 		else:
 			# to resolve DNS asynchronously, call resolve() prior to connect()
-			yield resolve(host)
+			_serverIPAddress = yield resolve(host)
 
 		# connect
 		start = datetime.now()
 		yield connect(host, port)
-		response._timings.connect = get_time_delta(start)
-	
+		_timings.connect = get_time_delta(start)
+		
+
 		# write
 		start = datetime.now()
 		yield write(raw_request)
-		response._timings.send = get_time_delta(start)
+		_timings.send = get_time_delta(start)
 		
 		# read
 		start = datetime.now()
 		raw_response = yield read()
-		response._timings.wait = get_time_delta(start)
+		_timings.wait = get_time_delta(start)
+
 		
 		# set bogus recieve timing
-		response._timings.recieve = 0
+		_timings.recieve = 0
 		
 		# calculate endtime
 		end = datetime.now()
@@ -70,9 +90,20 @@ def process(request):
 		# do something with Response object
 		#print raw_response
 		response.devour(raw_response)
-		print response #fuck... I need this to work differently
+		#print response
+		if type(outlist) == list:
+			
+			#entry = E
+			outlist.append(response)
+		else:
+			response._timings = _timings
+			
+			if _sequence:
+				response = _sequence
+			response._serverIPAddress = _serverIPAddress
+			print response
 
-		# close the connection
+		# # close the connection
 		yield close()
 
 	except SockError as e:
@@ -88,6 +119,13 @@ def get_time_delta(start):
 
 def make_requests(g):
 	return (process(request) for request in g)
+
+
+def response_generator(g):
+	outlist = []
+	run(process(request, outlist) for request in g)
+	for response in outlist:
+		yield response
 
 
 if __name__=='__main__':

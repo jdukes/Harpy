@@ -39,7 +39,6 @@
 *** use cases 2 quick sitemap
 *** fuzz and give me the most different
 *** record login & make into a function
-
 *** use a live session (perhaps selenium)
 *** easy multiple search in one line
 *** use soup to parse response to get something specific easily and sequence

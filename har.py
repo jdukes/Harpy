@@ -3,10 +3,11 @@
 #       run lint/pep8 checks
 
 import json
+import copy
 from StringIO import StringIO
 from socket import inet_pton, AF_INET6, AF_INET #used to validate ip addresses
 from socket import error as socket_error #used to validate ip addresses
-from urllib2 import urlopen
+from urllib2 import urlopen #this should be removed
 from dateutil import parser
 from datetime import datetime
 from base64 import b64encode, b64decode
@@ -168,6 +169,18 @@ class MetaHar(object):
                       or isinstance(v, unicode)
                       or isinstance(v, str)))) or '(empty)'
 
+
+    def with_val(self, **kwarg):
+        """with_val(key=value) -> self
+
+        This is essentially __setattr__ that returns an instance of
+        the object with the new value when called.
+        """
+        #I imagine this will get really confusing at some point
+        new_req = Request(self.to_json())
+        for key, value in kwarg.iteritems():
+            new_req.__dict__[key] = value
+        return new_req
 
     def get_children(self):
         """get_children() -> list
@@ -508,8 +521,9 @@ class Request(MetaHar):
             ("url" in self and self.url) or  "[undefined]",
             self._get_printable_kids())
 
-    def devour(self, req, proto='http', comment='', keep_b64_raw=True):
+    def devour(self, req, proto='http', comment='', keep_b64_raw=False):
         # Raw request does not have proto info
+        assert len(req.strip()), "Empty request cannot be devoured"
         if keep_b64_raw:
             self._b64_raw_req = b64encode(req) #just to be sure we're
                                                #keeping a copy of the
@@ -517,7 +531,10 @@ class Request(MetaHar):
                                                #default. This is a
                                                #person extension to
                                                #the spec.
+                                               #
+                                               #This is not default
         req = StringIO(req)
+        #!!! this doesn't always happen
         method, path, httpVersion = req.next().strip().split()
         self.method = method
         self.httpVersion = httpVersion
@@ -529,9 +546,10 @@ class Request(MetaHar):
                         "mimeType":"",
                         "text":""}
         seq = 0
-        for header in req:
+        for header in req: #make these the same for request and
+                           #response... this is stupid
             header = header.strip()
-            if not header:
+            if not ( header and ": " in header):
                 break
             header = dict(zip(["name", "value"], header.split(': ')))
             #length should be calculated for each request unless
@@ -546,7 +564,6 @@ class Request(MetaHar):
             if header["name"] == "Host":
                 self.url = '{0}://{1}{2}'.format(proto, header["value"], path)
             header["_sequence"] = seq
-            print header
             self.headers.append(Header(header))
             seq += 1
         headerSize = req.tell()
@@ -590,7 +607,7 @@ class Request(MetaHar):
         body = ''
         if 'postData' in self and self.postData:
             if not "Content-Type" in self.headers:
-                r += "Content-Type: {0}\r\n".format(self.postData.mimeType)
+                r += "Content-Type: {0}\r\n".format(self.postData.mimeType)    
             joined_params = "&".join( p.name + (p.value and ("="+ p.value))
                                       for p in self.postData.params)
             body = self.postData.text or joined_params
@@ -646,8 +663,9 @@ class Response(MetaHar):
         if "cookies" in self:
             self.cookies = [ Cookie(cookie) for cookie in self.cookies]
 
-    def devour(self, res, proto='http', comment='', keep_b64_raw=True):
+    def devour(self, res, proto='http', comment='', keep_b64_raw=False):
         # Raw request does not have proto info
+        assert len(res.strip()), "Empty response cannot be devoured"
         if keep_b64_raw:
             self._b64_raw_req = b64encode(res) #just to be sure we're
                                                #keeping a copy of the
@@ -656,7 +674,10 @@ class Response(MetaHar):
                                                #person extension to
                                                #the spec.
         res = StringIO(res)
-        httpVersion, status, statusText  = res.next().strip().split()
+        line = res.next().strip().split()
+        httpVersion = line[0]
+        status = line[1]
+        statusText  =  " ".join(line[2:])
         self.status = status
         self.statusText = statusText
         self.httpVersion = httpVersion
@@ -669,7 +690,7 @@ class Response(MetaHar):
                    "mimeType":""}
         for line in res:
             line = line.strip()
-            if not line:
+            if not ( line and ": " in line):
                 break
             header = dict(zip(["name", "value"], line.strip().split(': ')))
             if header["name"] == "Content-Length":
@@ -680,7 +701,7 @@ class Response(MetaHar):
                 content["mimeType"] = header["value"]
                 continue
             elif header["name"] == "Content-Encoding":
-                encoding = content["encoding"] = "base64" # for right now if we see something that's encoded we'll base64 it so it's portable
+                encoding = content["encoding"] = header["value"]
             elif header["name"] == "Host":
                 self.url = '{0}://{1}{2}'.format(proto, header["value"], path)
             elif header["name"] == "Location":
@@ -694,8 +715,14 @@ class Response(MetaHar):
             seq += 1
         self.headerSize = res.tell()
         content["text"] = res.read(int(self.bodySize))
-        if encoding:
+        try:
+            content["text"] = content["text"].encode('utf8')
+        except UnicodeDecodeError:
             content["text"] = b64encode(content["text"])
+            if encoding:
+                content["encoding"] =  encoding + "; base64"
+            else:
+                content["encoding"] =  "base64"
         self.content = Content(content)
 
     def render(self):
