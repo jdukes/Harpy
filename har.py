@@ -92,7 +92,49 @@ render(self) unbound __main__.Request method
     Return a string that should be exactly equal to the
     original request.
 
+This code is also intended to work well in comprehensions. For
+example, it's trivial to write a list comprehension to get a list of
+all URLs requested in a HAR:
 
+In [20]: [ e.request.url for e in hc.log.entries ]
+Out[20]: 
+[u'http://www.google.com/',
+ u'http://www.google.com/intl/en_ALL/images/srpr/logo1w.png',
+ u'http://www.google.com/images/srpr/nav_logo13.png',
+ ...
+ u'http://www.google.com/csi?v=foo']
+
+It is likewise trivial to search for items, or associte requests and
+responeses. For example, finding the response code for each url
+requested if the url contains 'www.google.com' can be easily done:
+
+In [21]: [ (e.request.url, e.response.status) for e in hc.log.entries if 'www.google.com' in e.request.url ]
+Out[21]: 
+[(u'http://www.google.com/', 200),
+ (u'http://www.google.com/intl/en_ALL/images/srpr/logo1w.png', 200),
+ ...
+ (u'http://www.google.com/csi?v=foo',
+  204)]
+
+We can also use comprehensions to generate objects that can be used to
+make new requests. The with_val method makes this simple. Here is the
+example from the with_val docstring:
+
+In [0]: [ r.with_val(url='http://foo.com/%d/user' % i)
+            for i in xrange(10) ]
+Out[0]: 
+[<Request to 'http://foo.com/0/user': ...
+ <Request to 'http://foo.com/1/user': ... 
+ <Request to 'http://foo.com/2/user': ... 
+  ...
+ <Request to 'http://foo.com/9/user': ... ]
+
+As development continues more functionality will be added. Currently
+Harpy is one project. In the future Harpy will be split in to
+Harpy-core and Harpy-utils. Harpy-core will be only the coe necessary
+for implementing the HAR specification. Harpy-utils will be a set of
+additional modules and scripts that assist in testing, such as request
+repeaters and spiders.
 
 It is intended that Harpy be self documenting. All information needed
 to use this module should be possible to gain from introspection. If
@@ -692,7 +734,9 @@ class Request(MetaHar):
                 seq = 0
                 for param in body.split('&'):
                     if "=" in param:
-                        name, value = param.split('=',1) #fuck
+                        name, value = param.split('=',1) #= is a valid
+                                                         #character in
+                                                         #values
                     else:
                         name = param
                         value = ""
@@ -719,6 +763,7 @@ class Request(MetaHar):
             assert node in self, \
                    "Cannot render request with unspecified {0}".format(node)
         path = '/' + '/'.join(self.url.split("/")[3:]) #this kind of sucks....
+        #this really sucks... do this smarter
         r = "{0} {1} {2}\r\n".format(self.method, path, self.httpVersion)
         #!!! not always clear in code where to use self vs self.__dict__
         #!!! need to fix things so always use one or the other, or is clear
@@ -891,14 +936,12 @@ class Cookie(MetaHar):
         assert header == 'Set-Cookie', \
                "Cookies must be devoured one at a time."
         values = cookie.split('; ')
-        buf = values[0].split('=') # fuckidy
-        self.name = buf[0] #fuck
-        self.value = '='.join(buf[1:]) #fuck fuck
+        self.name, self.value = values[0].split('=', 1)
         if len(values) == 1:
             return
         for attr in values[1:]:
             if '=' in attr:
-                name, value = attr.split('=')
+                name, value = attr.split('=',1)
                 self.__dict__[name.lower()] = value
             else:
                 if attr == "Secure":

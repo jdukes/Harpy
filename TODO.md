@@ -1,0 +1,1 @@
+* Add a "add_child" method that will add a child to the correct parent and instantiate any intermediate objects needed. e.g.: hc.add_child(request) on an empty container should create a log, create a new entry, and add the request to that entry.
