@@ -134,6 +134,11 @@ example from the replace docstring::
      ...
      <Request to 'http://foo.com/9/user': ... ]
 
+BUG WARNING: In Python, timezone information is not populated into
+datetime objects by default. All time objects must have a time zone
+according to the specification. The pytz module is used to manage
+this. This may be a bug waiting to bite.
+
 As development continues more functionality will be added. Currently
 Harpy is one project. In the future Harpy will be split in to
 Harpy-core and Harpy-utils. Harpy-core will be only the code necessary
@@ -157,12 +162,19 @@ from socket import error as socket_error #used to validate ip addresses
 from urllib2 import urlopen #this should be removed
 try:
     from dateutil import parser
-except ImportError, e:
+except ImportError:
     print ("Please verify that dateutil is installed. On Debian based systems "
            "like Ubuntu this can be  done with `aptitude install "
            "python-dateutil`.")
     raise
+try:
+    from pytz import timezone, utc
+except ImportError:
+    print ("Please verify that pytz is installed. The easiest way to "
+           "install it is with `easy_install pytz`")
+    raise
 from datetime import datetime
+from time import tzname
 from base64 import b64encode, b64decode
 
 ##############################################################################
@@ -252,7 +264,9 @@ class HarEncoder(json.JSONEncoder):
             return dict( (k,v) for k,v in obj.__dict__.iteritems()
                          if k != "_parent" )
         if isinstance(obj, datetime):
-            return obj.strftime('%Y-%m-%d%h:%m:%S.%s')
+            if not obj.tzinfo: #handle zone info not being added by python
+                obj = utc.localize(obj) #this is a bug waiting to happen
+            return d.isoformat()
             #according to the spec this needs to be ISO 8601
             #YYY-MM-DDThh:mm:ss.sTZD
         return json.JSONEncoder.default(self, obj)

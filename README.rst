@@ -149,4 +149,5 @@ bug report.
 -------------------------------------------------------------------------------
 
 Final notes:
-This code requires python-dateutil. 
+This code requires python-dateutil and pytz. I couldn't find any
+better way of dealing with time.
