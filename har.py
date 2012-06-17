@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+"""Har.py is a module for parsing HTTP Archive 1.2.
+http://www.softwareishard.com/blog/har-12-spec/
+
+There are some extensions made to the spec to gaurantee the original
+state of the message. This software is designed to be used for web
+testing, specifically security testing. Focus, therefore, has been
+placed on reproducability and quick parsing of large datasets.
+
+
+"""
+
 # todo: write unit tests
 #       run lint/pep8 checks
 
@@ -8,7 +19,13 @@ from StringIO import StringIO
 from socket import inet_pton, AF_INET6, AF_INET #used to validate ip addresses
 from socket import error as socket_error #used to validate ip addresses
 from urllib2 import urlopen #this should be removed
-from dateutil import parser
+try:
+    from dateutil import parser
+except ImportError, e:
+    print ("Please verify that dateutil is installed. On Debian based systems "
+           "like Ubuntu this can be  done with `aptitude install "
+           "python-dateutil`.")
+    raise
 from datetime import datetime
 from base64 import b64encode, b64decode
 
@@ -157,10 +174,8 @@ class MetaHar(object):
             self._get_printable_kids())
 
     def _get_printable_kids(self):
-        """_get_printable_kids() -> list
-
-        Return all objects that are children of the object on which
-        the method is called.
+        """Return a tuple of all objects that are children of the
+        object on which the method is called.
         """
         return tuple( str(k) for k,v in self.__dict__.iteritems()
                  if (str(k) != "_parent" and
@@ -171,10 +186,25 @@ class MetaHar(object):
 
 
     def with_val(self, **kwarg):
-        """with_val(key=value) -> self
+        """Return a copy of the object with a varabile set to a value.
 
-        This is essentially __setattr__ that returns an instance of
-        the object with the new value when called.
+        This is essentially __setattr__ except that it returns an
+        instance of the object with the new value when called. This
+        method was added to make comprensions easier to write. The
+        canonical use case is for sequencing:
+
+        In [0]: [ r.with_val(url='http://foo.com/%d/user' % i)
+                    for i in xrange(10) ]
+        Out[0]: 
+        [<Request to 'http://foo.com/0/user': ...
+         <Request to 'http://foo.com/1/user': ... 
+         <Request to 'http://foo.com/2/user': ... 
+        ...
+         <Request to 'http://foo.com/9/user': ... ]
+
+        As a request object can always be turned back in to a raw
+        request, this is useful for testing by taking a known good
+        request and modifying it to observe different results.
         """
         #I imagine this will get really confusing at some point
         new_req = Request(self.to_json())
@@ -183,9 +213,7 @@ class MetaHar(object):
         return new_req
 
     def get_children(self):
-        """get_children() -> list
-
-        Return all objects that are children of the object on which
+        """Return all objects that are children of the object on which
         the method is called.
         """
         #dunno if I like this method... maybe should be a generator?
@@ -208,9 +236,7 @@ class MetaHar(object):
         pass
 
     def set_defaults(self):
-        """H.set_defaults() -> None
-
-        In general this method sets defaults for objects not
+        """In general this method sets defaults for objects not
         instantiated via 'init_from' if 'set_defaults' parameter is
         not set to False. It can also be used to reset a har to a
         default state."""
@@ -496,9 +522,7 @@ class Request(MetaHar):
                         "httpVersion": "HTTP/1.1"})
 
     def set_header(self, name, value):
-        """Req.set_header(name, value) -> None
-
-        Sets a header to a specific value. NOTE: This operates by
+        """Sets a header to a specific value. NOTE: This operates by
         rebuilding the header list so if two headers have the same
         name they will both be removed and replaced with the new one
         """
@@ -924,7 +948,12 @@ class Timings(MetaHar):
 
 
 if __name__ == "__main__":
-    #har = HarContainer(urlopen('http://demo.ajaxperformance.com/har/espn.har').read())
-    hc = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
-    #hc = HarContainer(open('/home/jdukes/tmp/demo.har').read())
+    for i in ['http://demo.ajaxperformance.com/har/espn.har',
+              'http://demo.ajaxperformance.com/har/google.har']:
+        try:
+            hc = HarContainer(urlopen(i).read())
+            print "Successfully loaded har %s from %s" % (repr(hc), i)
+        except Exception, e:
+            print "failed to load har from %s" % i
+            print e
 

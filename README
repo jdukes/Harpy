@@ -1,5 +1,20 @@
+Har.py is a module for parsing HTTP Archive 1.2.
+http://www.softwareishard.com/blog/har-12-spec/
+
+There are some extensions made to the spec to gaurantee the original
+state of the message. This software is designed to be used for web
+testing, specifically security testing. Focus, therefore, has been
+placed on reproducability and quick parsing of large datasets.
+
+One of the design goals of this library is to make usage simple. This
+code should work the way you think it would work. There are several
+ways to use Har.py and these will be different depending on the goal
+of the software using it. 
+
+
 requires python-dateutil
 
+-------------------------------------------------------------------------------
 
 There's a lot of manual parsing of queries, params, etc. This seems
 like a stupid way to parse shit. I looked around a bit and didn't see
