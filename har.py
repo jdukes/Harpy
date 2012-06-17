@@ -149,9 +149,6 @@ bug report.
 
 """
 
-# todo: write unit tests
-#       run lint/pep8 checks
-
 import json
 import copy
 from StringIO import StringIO
