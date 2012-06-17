@@ -141,12 +141,7 @@ improvements. If Harpy ever fails to be either lossless please file a
 bug report.
 
 
-
-requires python-dateutil
-
 -------------------------------------------------------------------------------
 
-There's a lot of manual parsing of queries, params, etc. This seems
-like a stupid way to parse shit. I looked around a bit and didn't see
-a library that did this already. I'll look around again later.
-
+Final notes:
+This code requires python-dateutil. 
