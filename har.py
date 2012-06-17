@@ -21,22 +21,22 @@ ways to use Harpy and these will be different depending on the goal of
 the software using it.
 
 Constucting an object from scratch should be as easy as instantiating
-the object:
+the object::
 
-In [0]: hc = HarContainer()
+    In [0]: hc = HarContainer()
+    
+    In [1]: print hc
+    {}
 
-In [1]: print hc
-{}
+    In [2]: hc
+    Out[2]: <HarContainer: (empty)>
 
-In [2]: hc
-Out[2]: <HarContainer: (empty)>
+Some objects have default values which are pre-set::
 
-Some objects have default values which are pre-set:
-
-In [3]: r = Request()
-
-In [4]: r
-Out[4]: <Request to 'http://example.com/': ('cookies', 'url', 'queryString', 'headers', 'method', 'httpVersion')>
+    In [3]: r = Request()
+    
+    In [4]: r
+    Out[4]: <Request to 'http://example.com/': ('cookies', 'url', 'queryString', 'headers', 'method', 'httpVersion')>
 
 To not set default values on object creation disable default settings:
 
@@ -141,6 +141,7 @@ to use this module should be possible to gain from introspection. If
 it ever fails to be easy to use or well documented, please suggest
 improvements. If Harpy ever fails to be either lossless please file a
 bug report.
+
 """
 
 # todo: write unit tests

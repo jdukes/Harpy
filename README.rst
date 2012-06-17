@@ -20,15 +20,15 @@ ways to use Harpy and these will be different depending on the goal of
 the software using it.
 
 Constucting an object from scratch should be as easy as instantiating
-the object:
+the object::
 
-In [0]: hc = HarContainer()
-
-In [1]: print hc
-{}
-
-In [2]: hc
-Out[2]: <HarContainer: (empty)>
+    In [0]: hc = HarContainer()
+    
+    In [1]: print hc
+    {}
+    
+    In [2]: hc
+    Out[2]: <HarContainer: (empty)>
 
 Some objects have default values which are pre-set:
 
