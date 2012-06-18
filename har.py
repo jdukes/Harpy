@@ -137,7 +137,8 @@ example from the replace docstring::
 BUG WARNING: In Python, timezone information is not populated into
 datetime objects by default. All time objects must have a time zone
 according to the specification. The pytz module is used to manage
-this. This may be a bug waiting to bite.
+this. All things without timezones will be localized to UTC. This may
+be a bug waiting to bite.
 
 As development continues more functionality will be added. Currently
 Harpy is one project. In the future Harpy will be split in to
@@ -263,10 +264,11 @@ class HarEncoder(json.JSONEncoder):
         if isinstance(obj, MetaHar):
             return dict( (k,v) for k,v in obj.__dict__.iteritems()
                          if k != "_parent" )
+        #!!! fix this
         if isinstance(obj, datetime):
             if not obj.tzinfo: #handle zone info not being added by python
                 obj = utc.localize(obj) #this is a bug waiting to happen
-            return d.isoformat()
+            return obj.isoformat()
             #according to the spec this needs to be ISO 8601
             #YYY-MM-DDThh:mm:ss.sTZD
         return json.JSONEncoder.default(self, obj)
