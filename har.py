@@ -322,7 +322,7 @@ class MetaHar(object):
     def __repr__(self):
         return "<{0} {1} {2}>".format(
             self.__class__.__name__,
-            'name' in self.__dict__ and self.name or "[undefined]",
+            self.__dict__.get('name',"[undefined]"),
             self._get_printable_kids())
 
     def _get_printable_kids(self):
@@ -1113,13 +1113,15 @@ if __name__ == "__main__":
     if len(argv) > 1:
         if argv[1] == "docs":
             print __doc__
-            exit(0)
-    for i in ['http://demo.ajaxperformance.com/har/espn.har',
-              'http://demo.ajaxperformance.com/har/google.har']:
-        try:
-            hc = HarContainer(urlopen(i).read())
-            print "Successfully loaded har %s from %s" % (repr(hc), i)
-        except Exception, e:
-            print "failed to load har from %s" % i
-            print e
-
+        elif argv[1] == "test":
+            for i in ['http://demo.ajaxperformance.com/har/espn.har',
+                      'http://demo.ajaxperformance.com/har/google.har']:
+                try:
+                    hc = HarContainer(urlopen(i).read())
+                    print "Successfully loaded har %s from %s" % (repr(hc), i)
+                except Exception, e:
+                    print "failed to load har from %s" % i
+                    print e
+    else:
+        print "usage: %s (docs|test)\n"
+        print "Either print out documentation for this module or run a test."
