@@ -1105,9 +1105,23 @@ class Timings(MetaHar):
 
 
 ###############################################################################
-# Main
+# Interface Functions and Classes
 ###############################################################################
 
+
+def test():
+    for i in ['http://demo.ajaxperformance.com/har/espn.har',
+              'http://demo.ajaxperformance.com/har/google.har']:
+        try:
+            hc = HarContainer(urlopen(i).read())
+            print "Successfully loaded har %s from %s" % (repr(hc), i)
+        except Exception, e:
+            print "failed to load har from %s" % i
+            print e
+
+def usage():
+    print "usage: %s (docs|test)\n"
+    print "Either print out documentation for this module or run a test."
 
 if __name__ == "__main__":
     from sys import argv
@@ -1115,14 +1129,7 @@ if __name__ == "__main__":
         if argv[1] == "docs":
             print __doc__
         elif argv[1] == "test":
-            for i in ['http://demo.ajaxperformance.com/har/espn.har',
-                      'http://demo.ajaxperformance.com/har/google.har']:
-                try:
-                    hc = HarContainer(urlopen(i).read())
-                    print "Successfully loaded har %s from %s" % (repr(hc), i)
-                except Exception, e:
-                    print "failed to load har from %s" % i
-                    print e
+            test()
     else:
-        print "usage: %s (docs|test)\n"
-        print "Either print out documentation for this module or run a test."
+        usage()
+    
