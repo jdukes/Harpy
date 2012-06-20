@@ -75,7 +75,7 @@ that contains json, or a dictionary::
 Some objects, such as requests and responses, can consumed from raw::
 
      In [14]: raw
-     Out[14]: 'GET / HTTP/1.1\r\nHost: localhost:1234\r\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-us,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\n\r\n'
+     Out[14]: 'GET / HTTP/1.1\\r\\nHost: localhost:1234\\r\\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0\\r\\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\\r\\nAccept-Language: en-us,en;q=0.5\\r\\nAccept-Encoding: gzip, deflate\\r\\nConnection: keep-alive\\r\\n\\r\\n'
      
      In [15]: r = Request()
      
@@ -87,7 +87,7 @@ Some objects, such as requests and responses, can consumed from raw::
 These objects can also be rendered back to raw::
 
       In [18]: r.puke()
-      Out[18]: 'GET / HTTP/1.1\r\nHost: localhost:1234\r\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-us,en;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: keep-alive\r\n\r\n'
+      Out[18]: 'GET / HTTP/1.1\\r\\nHost: localhost:1234\\r\\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0\\r\\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\\r\\nAccept-Language: en-us,en;q=0.5\\r\\nAccept-Encoding: gzip, deflate\\r\\nConnection: keep-alive\\r\\n\\r\\n'
 
 For polite people there's an alias::
 
@@ -1109,6 +1109,11 @@ class Timings(MetaHar):
 
 
 if __name__ == "__main__":
+    from sys import argv
+    if len(argv) > 1:
+        if argv[1] == "docs":
+            print __doc__
+            exit(0)
     for i in ['http://demo.ajaxperformance.com/har/espn.har',
               'http://demo.ajaxperformance.com/har/google.har']:
         try:

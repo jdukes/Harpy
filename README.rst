@@ -133,6 +133,12 @@ example from the replace docstring::
      ...
      <Request to 'http://foo.com/9/user': ... ]
 
+BUG WARNING: In Python, timezone information is not populated into
+datetime objects by default. All time objects must have a time zone
+according to the specification. The pytz module is used to manage
+this. All things without timezones will be localized to UTC. This may
+be a bug waiting to bite.
+
 As development continues more functionality will be added. Currently
 Harpy is one project. In the future Harpy will be split in to
 Harpy-core and Harpy-utils. Harpy-core will be only the code necessary
@@ -146,8 +152,4 @@ it ever fails to be easy to use or well documented, please suggest
 improvements. If Harpy ever fails to be either lossless please file a
 bug report.
 
--------------------------------------------------------------------------------
 
-Final notes:
-This code requires python-dateutil and pytz. I couldn't find any
-better way of dealing with time.
