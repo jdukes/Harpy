@@ -179,7 +179,7 @@ from time import tzname
 from base64 import b64encode, b64decode
 
 ##############################################################################
-# Static Definitions
+# Constants
 ###############################################################################
 
 METHODS = ["OPTIONS",
@@ -254,7 +254,7 @@ class ValidationError(Exception):
 
 
 ###############################################################################
-# JSON Overrides and Hooks
+# Interface Functions and Classes
 ###############################################################################
 
 
@@ -290,11 +290,12 @@ class MetaHar(object):
         """
         self._parent = parent
         if init_from:
+            #!!! there might be a better way to do this
             assert type(init_from) in [unicode, str, file, dict], \
                    ("A har can only be initialized from a string, "
                     "file object, dict")
             if type(init_from) in [unicode, str, file]:
-                if type(init_from) == unicode or type(init_from) == str:
+                if type(init_from) is unicode or type(init_from) is str:
                     fd = StringIO(init_from)
                 else:
                     fd = init_from
