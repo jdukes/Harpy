@@ -222,7 +222,7 @@ METHODS = ["OPTIONS",
 ###############################################################################
 
 
-class MissingValueExcpetion(Exception):
+class MissingValueException(Exception):
 
     def __init__(self, value, in_class):
         self.value = value
@@ -281,7 +281,7 @@ class _MetaHar(object):
         for other objects. It should never be instantiated directly.
         
         """
-        assert not self.__class__ is _MetaHar, (
+        assert not self.__class__ in [_MetaHar, _KeyValueHar], (
             "This is a meta class used to type other classes. "
             "To use this class create a new object that extends it")
         self._parent = parent
@@ -409,7 +409,7 @@ class _MetaHar(object):
     def _has_fields(self, *fields):
         for field in fields:
             if not field in self.__dict__:
-                raise MissingValueExcpetion(field, self.__class__.__name__)
+                raise MissingValueException(field, self.__class__.__name__)
 
     def _check_field_types(self, field_defs):
         for fname, ftype in field_defs.iteritems():
@@ -424,7 +424,7 @@ class _MetaHar(object):
 
 #------------------------------------------------------------------------------
 
-class KeyValueHar(_MetaHar):
+class _KeyValueHar(_MetaHar):
 
     def validate(self): #default behavior
         field_types = {"name":[unicode, str],
@@ -969,14 +969,14 @@ class Cookie(_MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Header(KeyValueHar):
+class Header(_KeyValueHar):
     pass
 
 
 #------------------------------------------------------------------------------
 
 
-class QueryString(KeyValueHar):
+class QueryString(_KeyValueHar):
     pass
 
 
@@ -1004,7 +1004,7 @@ class PostData(_MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Param(KeyValueHar):
+class Param(_KeyValueHar):
 
     def validate(self): #default behavior
         field_types = {"name":[unicode, str]}
