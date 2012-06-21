@@ -1,20 +1,44 @@
+#!/usr/bin/env python
+
+from datetime import datetime
 import unittest
+from sys import path
+path.append('./')
+path.append('../')
+from har import *
 
 class TestHarEncoder(unittest.TestCase):
-    def test_default(self):
-        # har_encoder = HarEncoder()
-        # self.assertEqual(expected, har_encoder.default(obj))
-        assert False # TODO: implement your test here
+
+    def setUp(self):
+        self.har_encoder = HarEncoder()
+
+    def test_date_decoding(self):
+        good_json = '2009-07-24T19:20:30.45+01:00'
+        good_dt = datetime(2009, 07, 24,
+                           19, 20, 30, 45,
+                           tz.tzoffset(None, 3600))
+        test_json = self.har_encoder.default(good_dt)
+        self.assertEqual(good_json, test_json)
+
+    def test_date_encoding(self):
+        good_json = '2009-07-24T19:20:30.45+01:00'
+        good_dt = datetime(2009, 07, 24,
+                           19, 20, 30, 45,
+                           tz.tzoffset(None, 3600))
+        test_dt = parser.parse(good_json)
+        self.assertEqual(good_dt, test_dt)
 
 class test__MetaHar(unittest.TestCase):
+
     def test___contains__(self):
         # __meta_har = _MetaHar(init_from, parent, defaults)
         # self.assertEqual(expected, __meta_har.__contains__(obj))
         assert False # TODO: implement your test here
 
     def test___init__(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        assert False # TODO: implement your test here
+        #Should not ever instantiate.
+        with self.assertRaises(AssertionError):
+            har._MetaHar()
 
     def test___iter__(self):
         # __meta_har = _MetaHar(init_from, parent, defaults)
@@ -67,6 +91,13 @@ class test__MetaHar(unittest.TestCase):
         assert False # TODO: implement your test here
 
 class test__KeyValueHar(unittest.TestCase):
+
+    def test__init__(self):
+        #Should not ever instantiate.
+        with self.assertRaises(AssertionError):
+            har._KeyValueHar()
+
+
     def test___eq__(self):
         # __key_value_har = _KeyValueHar()
         # self.assertEqual(expected, __key_value_har.__eq__(other))
@@ -83,6 +114,11 @@ class test__KeyValueHar(unittest.TestCase):
         assert False # TODO: implement your test here
 
 class TestHarContainer(unittest.TestCase):
+
+    def test___init__(self):
+        har_container = HarContainer()
+        assert False # TODO: implement your test here
+
     def test___repr__(self):
         # har_container = HarContainer()
         # self.assertEqual(expected, har_container.__repr__())
