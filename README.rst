@@ -23,13 +23,13 @@ Constructing an object from scratch should be as easy as instantiating
 the object::
 
     In [0]: hc = HarContainer()
-    
-    In [1]: print hc
+
+    In [1]: hc
+    Out[1]: <HarContainer: (empty)>
+
+    In [2]: print hc
     {}
     
-    In [2]: hc
-    Out[2]: <HarContainer: (empty)>
-
 Some objects have default values which are pre-set::
 
     In [3]: r = Request()
