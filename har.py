@@ -136,9 +136,10 @@ example from the replace docstring::
 
 BUG WARNING: In Python, timezone information is not populated into
 datetime objects by default. All time objects must have a time zone
-according to the specification. The pytz module is used to manage
-this. All things without timezones will be localized to UTC. This may
-be a bug waiting to bite.
+according to the specification. The dateutil module is used to manage
+this. All things without timezones will be localized to the user's
+time. This can be configured by changing har.TIMEZONE. This may be a
+bug waiting to bite.
 
 As development continues more functionality will be added. Currently
 Harpy is one project. In the future Harpy will be split in to
@@ -162,17 +163,11 @@ from socket import inet_pton, AF_INET6, AF_INET #used to validate ip addresses
 from socket import error as socket_error #used to validate ip addresses
 from urllib2 import urlopen #this should be removed
 try:
-    from dateutil import parser
+    from dateutil import parser, tz
 except ImportError:
     print ("Please verify that dateutil is installed. On Debian based systems "
            "like Ubuntu this can be  done with `aptitude install "
-           "python-dateutil`.")
-    raise
-try:
-    from pytz import timezone, utc
-except ImportError:
-    print ("Please verify that pytz is installed. The easiest way to "
-           "install it is with `easy_install pytz`")
+           "python-dateutil` or `easy_install dateutil`.")
     raise
 from datetime import datetime
 from time import tzname
@@ -181,6 +176,8 @@ from base64 import b64encode, b64decode
 ##############################################################################
 # Constants
 ###############################################################################
+
+TIMEZONE = tz.tzlocal()
 
 METHODS = ["OPTIONS",
            "GET",
@@ -255,13 +252,12 @@ class HarEncoder(json.JSONEncoder):
         if isinstance(obj, _MetaHar):
             return dict( (k,v) for k,v in obj.__dict__.iteritems()
                          if k != "_parent" )
-        #!!! fix this
         if isinstance(obj, datetime):
             if not obj.tzinfo: #handle zone info not being added by python
-                obj = utc.localize(obj) #this is a bug waiting to happen
+                obj = obj.replace(tzinfo=TIMEZONE)
             return obj.isoformat()
             #according to the spec this needs to be ISO 8601
-            #YYY-MM-DDThh:mm:ss.sTZD
+            #YYYY-MM-DDThh:mm:ss.sTZD
         return json.JSONEncoder.default(self, obj)
 
 

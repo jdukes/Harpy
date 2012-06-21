@@ -1,32 +1,51 @@
 #!/usr/bin/env python
 
-from datetime import datetime
 import unittest
+import re
+
+from datetime import datetime
+from dateutil import tz, parser
 from sys import path
+
 path.append('./')
 path.append('../')
-from har import *
+import har
 
 class TestHarEncoder(unittest.TestCase):
 
     def setUp(self):
-        self.har_encoder = HarEncoder()
-
+        self.har_encoder = har.HarEncoder()
+        self.iso8601_re = re.compile(
+            r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?\+\d{2}:\d{2}')
+            
     def test_date_decoding(self):
         good_json = '2009-07-24T19:20:30.45+01:00'
         good_dt = datetime(2009, 07, 24,
-                           19, 20, 30, 45,
+                           19, 20, 30, 450000,
                            tz.tzoffset(None, 3600))
         test_json = self.har_encoder.default(good_dt)
-        self.assertEqual(good_json, test_json)
+        g_match = re.match(self.iso8601_re, good_json)
+        t_match = re.match(self.iso8601_re, test_json)
+        #This isn't a great test... we should have a better one
+        self.assertTrue(g_match)
+        self.assertTrue(t_match)
 
     def test_date_encoding(self):
         good_json = '2009-07-24T19:20:30.45+01:00'
         good_dt = datetime(2009, 07, 24,
-                           19, 20, 30, 45,
+                           19, 20, 30, 450000,
                            tz.tzoffset(None, 3600))
         test_dt = parser.parse(good_json)
         self.assertEqual(good_dt, test_dt)
+
+    def test_setting_tz(self):
+        no_tz = datetime.now()
+        gmt = no_tz.replace(tzinfo= tz.tzoffset(None, 0))
+        har.TIMEZONE = tz.tzoffset(None, 0)
+        good_json = self.har_encoder.default(gmt)
+        test_json = self.har_encoder.default(no_tz)
+        self.assertEqual(good_json, test_json)
+        
 
 class test__MetaHar(unittest.TestCase):
 

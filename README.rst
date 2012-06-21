@@ -135,9 +135,10 @@ example from the replace docstring::
 
 BUG WARNING: In Python, timezone information is not populated into
 datetime objects by default. All time objects must have a time zone
-according to the specification. The pytz module is used to manage
-this. All things without timezones will be localized to UTC. This may
-be a bug waiting to bite.
+according to the specification. The dateutil module is used to manage
+this. All things without timezones will be localized to the user's
+time. This can be configured by changing har.TIMEZONE. This may be a
+bug waiting to bite.
 
 As development continues more functionality will be added. Currently
 Harpy is one project. In the future Harpy will be split in to
