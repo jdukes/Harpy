@@ -235,15 +235,6 @@ class MissingValueExcpetion(Exception):
                     self.in_class))
 
 
-class ModeNotSupported(Exception):
-
-    def __init__(self, mode):
-        self.mode = mode
-
-    def __str__(self):
-        return str("Mode %s not supported" % self.mode)
-
-
 class ValidationError(Exception):
 
     def __init__(self, msg):
@@ -261,7 +252,7 @@ class ValidationError(Exception):
 class HarEncoder(json.JSONEncoder):
 
     def default(self, obj):
-        if isinstance(obj, MetaHar):
+        if isinstance(obj, _MetaHar):
             return dict( (k,v) for k,v in obj.__dict__.iteritems()
                          if k != "_parent" )
         #!!! fix this
@@ -279,21 +270,26 @@ class HarEncoder(json.JSONEncoder):
 ###############################################################################
 
 
-class MetaHar(object):
+class _MetaHar(object):
     """This is the base class that all HAR objects use. It defines
     default methods and objects."""
     # this needs to be a tree so child objects can validate that they
     # are uniq children
 
     def __init__(self, init_from=None, parent=None, defaults=True):
-        """ Needs documentation
+        """ This is the _MetaHar object. It is used as the meta class
+        for other objects. It should never be instantiated directly.
+        
         """
+        assert not self.__class__ is _MetaHar, (
+            "This is a meta class used to type other classes. "
+            "To use this class create a new object that extends it")
         self._parent = parent
         if init_from:
             #!!! there might be a better way to do this
-            assert type(init_from) in [unicode, str, file, dict], \
-                   ("A har can only be initialized from a string, "
-                    "file object, dict")
+            assert type(init_from) in [unicode, str, file, dict], (
+                "A har can only be initialized from a string, file "
+                "object, dict")
             if type(init_from) in [unicode, str, file]:
                 if type(init_from) is unicode or type(init_from) is str:
                     fd = StringIO(init_from)
@@ -309,7 +305,7 @@ class MetaHar(object):
     def __iter__(self):
         return (v for k,v in self.__dict__.iteritems()
                  if k != "_parent" and
-                 (isinstance(v, MetaHar)
+                 (isinstance(v, _MetaHar)
                   or isinstance(v, list)
                   or isinstance(v, unicode)
                   or isinstance(v, str)))
@@ -332,7 +328,7 @@ class MetaHar(object):
         """
         return tuple( str(k) for k,v in self.__dict__.iteritems()
                  if (str(k) != "_parent" and
-                     (isinstance(v, MetaHar)
+                     (isinstance(v, _MetaHar)
                       or isinstance(v, list)
                       or isinstance(v, unicode)
                       or isinstance(v, str)))) or '(empty)'
@@ -428,7 +424,7 @@ class MetaHar(object):
 
 #------------------------------------------------------------------------------
 
-class KeyValueHar(MetaHar):
+class KeyValueHar(_MetaHar):
 
     def validate(self): #default behavior
         field_types = {"name":[unicode, str],
@@ -450,7 +446,7 @@ class KeyValueHar(MetaHar):
 
 #------------------------------------------------------------------------------
 
-class HarContainer(MetaHar):
+class HarContainer(_MetaHar):
 
     def __repr__(self):
         return "<{0}: {1}>".format(
@@ -468,7 +464,7 @@ class HarContainer(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Log(MetaHar):
+class Log(_MetaHar):
 
     def validate(self):
         self._has_fields("version", "creator", "entries")
@@ -504,7 +500,7 @@ class Log(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Creator(MetaHar):
+class Creator(_MetaHar):
 
     def validate(self):
         self._has_fields("name",
@@ -533,7 +529,7 @@ class Browser(Creator):
 #------------------------------------------------------------------------------
 
 
-class Page(MetaHar):
+class Page(_MetaHar):
 
     def validate(self):
         self._has_fields("startedDateTime",
@@ -563,7 +559,7 @@ class Page(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class PageTimings(MetaHar):
+class PageTimings(_MetaHar):
 
     def validate(self):
         field_defs = {}
@@ -583,7 +579,7 @@ class PageTimings(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Entry(MetaHar):
+class Entry(_MetaHar):
 
     def validate(self):
         field_defs = {"startedDateTime":[unicode, str]}
@@ -628,7 +624,7 @@ class Entry(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Request(MetaHar):
+class Request(_MetaHar):
 
     def validate(self):
         field_defs = {"method":[unicode, str], #perhaps these should
@@ -811,7 +807,7 @@ class Request(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Response(MetaHar):
+class Response(_MetaHar):
 
     def validate(self):
         field_defs = {"status":int,
@@ -923,7 +919,7 @@ class Response(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Cookie(MetaHar):
+class Cookie(_MetaHar):
 
     def validate(self): #default behavior
         field_types = {"name":[unicode, str],
@@ -987,7 +983,7 @@ class QueryString(KeyValueHar):
 #------------------------------------------------------------------------------
 
 
-class PostData(MetaHar):
+class PostData(_MetaHar):
 
         def validate(self):
             field_types = {"mimeType":[unicode, str],
@@ -1032,7 +1028,7 @@ class Param(KeyValueHar):
 #------------------------------------------------------------------------------
 
 
-class Content(MetaHar):
+class Content(_MetaHar):
 
     def validate(self):
         self._has_fields("size",
@@ -1053,7 +1049,7 @@ class Content(MetaHar):
 #------------------------------------------------------------------------------
 
 
-class Cache(MetaHar):
+class Cache(_MetaHar):
 
     def validate(self):
         field_types={}
@@ -1073,7 +1069,7 @@ class Cache(MetaHar):
 
 #------------------------------------------------------------------------------
 
-class RequestCache(MetaHar):
+class RequestCache(_MetaHar):
 
     def validate(self):
         field_types = {"lastAccess":[unicode, str],
@@ -1090,7 +1086,7 @@ class RequestCache(MetaHar):
 
 #------------------------------------------------------------------------------
 
-class Timings(MetaHar):
+class Timings(_MetaHar):
 
     def validate(self):
         field_defs = {"send":int,
@@ -1113,7 +1109,10 @@ def test():
     for i in ['http://demo.ajaxperformance.com/har/espn.har',
               'http://demo.ajaxperformance.com/har/google.har']:
         try:
-            hc = HarContainer(urlopen(i).read())
+            req = urlopen(i)
+            #req.headers['content-type'].split('charset=')[-1]
+            content = req.read()
+            hc = HarContainer(content)
             print "Successfully loaded har %s from %s" % (repr(hc), i)
         except Exception, e:
             print "failed to load har from %s" % i
