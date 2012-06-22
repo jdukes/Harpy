@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Harpy is a module for parsing HTTP Archive 1.2.
 
 More information on the HTTP Archive specification can be found here:
@@ -497,8 +498,9 @@ class Log(_MetaHar):
         also be used to reset a har to a default state.
 
         """
-        pass
-        #self.creator = Creator("Harpy " + __version__)
+        self.version = "1.2"
+        self.creator = Creator()
+        self.entries = []
 
     def __repr__(self):
         try:
@@ -525,9 +527,19 @@ class Creator(_MetaHar):
             field_defs["comment"] = [unicode, str]
         self._check_field_types(field_defs)
 
+    def set_defaults(self):
+        """This method sets defaults for objects not instantiated via
+        'init_from' if 'empty' parameter is set to False (default). It can
+        also be used to reset a har to a default state.
+
+        """
+        self.version = __version__
+        self.name = "Harpy"
+
     def __repr__(self):
         return "<Created by {0}: {1}>".format(
-            self.name, self._get_printable_kids())
+            ("name" in self and self.name) or '[uninitialized]',
+            self._get_printable_kids())
 
 
 #------------------------------------------------------------------------------

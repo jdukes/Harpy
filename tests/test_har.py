@@ -17,7 +17,7 @@ class TestHarEncoder(unittest.TestCase):
         self.har_encoder = har.HarEncoder()
         self.iso8601_re = re.compile(
             r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?\+\d{2}:\d{2}')
-            
+
     def test_date_decoding(self):
         good_json = '2009-07-24T19:20:30.45+01:00'
         good_dt = datetime(2009, 07, 24,
@@ -45,7 +45,7 @@ class TestHarEncoder(unittest.TestCase):
         good_json = self.har_encoder.default(gmt)
         test_json = self.har_encoder.default(no_tz)
         self.assertEqual(good_json, test_json)
-        
+
 
 class test__MetaHar(unittest.TestCase):
 
@@ -65,25 +65,43 @@ class TestHarContainer(unittest.TestCase):
 
     def test_default_init_(self):
         har_container = HarContainer()
-        
 
-    def test___init__(self):
+    def test_empty_init_(self):        
+        har_container = HarContainer(empty=True)
+
+    def test_default_repr__(self):
+        #test defaults
+        expected = r"<HarContainer: ('log',)>"
         har_container = HarContainer()
-        assert False # TODO: implement your test here
+        self.assertEqual(expected, har_container.__repr__())
 
-    def test___repr__(self):
-        # har_container = HarContainer()
-        # self.assertEqual(expected, har_container.__repr__())
-        assert False # TODO: implement your test here
-
+    def test_empty_repr__(self):
+        #test empty
+        expected = r"<HarContainer: (empty)>"
+        har_container = HarContainer(empty=True)
+        self.assertEqual(expected, har_container.__repr__())
+        
     def test_validate(self):
         # har_container = HarContainer()
         # self.assertEqual(expected, har_container.validate())
         assert False # TODO: implement your test here
 
 class TestLog(unittest.TestCase):
-    def test___repr__(self):
-        # log = Log()
+
+    def test_default_init_(self):
+        log = Log()
+
+    def test_empty_init_(self):
+        log = Log(empty=True)
+
+    def test_default_repr_(self):
+        expected = "<HAR 1.2 Log created by Harpy $Id$: ('entries', 'version', 'creator')>"
+        log = Log()
+        self.assertEqual(expected, log.__repr__())
+
+
+    def test_empty_repr_(self):
+        log = Log(empty=True)
         # self.assertEqual(expected, log.__repr__())
         assert False # TODO: implement your test here
 
@@ -93,10 +111,22 @@ class TestLog(unittest.TestCase):
         assert False # TODO: implement your test here
 
 class TestCreator(unittest.TestCase):
-    def test___repr__(self):
-        # creator = Creator()
-        # self.assertEqual(expected, creator.__repr__())
-        assert False # TODO: implement your test here
+
+    def test_default_init_(self):
+        creator = Creator()
+
+    def test_empty_init_(self):
+        creator = Creator(empty=True)
+
+    def test_default_repr_(self):
+        expected = "<Created by Harpy: ('version', 'name')>"
+        creator = Creator()
+        self.assertEqual(expected, creator.__repr__())
+
+    def test_empty_repr_(self):
+        expected = r"<Created by [uninitialized]: (empty)>"
+        creator = Creator(emtpy=True)
+        self.assertEqual(expected, creator.__repr__())
 
     def test_validate(self):
         # creator = Creator()
