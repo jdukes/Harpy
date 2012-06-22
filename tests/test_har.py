@@ -64,27 +64,56 @@ class test__KeyValueHar(unittest.TestCase):
 class TestHarContainer(unittest.TestCase):
 
     def test_default_init_(self):
-        har_container = HarContainer()
+        har_container = har.HarContainer()
 
     def test_empty_init_(self):        
-        har_container = HarContainer(empty=True)
+        har_container = har.HarContainer(empty=True)
 
     def test_default_repr__(self):
         #test defaults
         expected = r"<HarContainer: ('log',)>"
-        har_container = HarContainer()
+        har_container = har.HarContainer()
         self.assertEqual(expected, har_container.__repr__())
 
     def test_empty_repr__(self):
         #test empty
         expected = r"<HarContainer: (empty)>"
-        har_container = HarContainer(empty=True)
+        har_container = har.HarContainer(empty=True)
         self.assertEqual(expected, har_container.__repr__())
         
-    def test_validate(self):
-        # har_container = HarContainer()
-        # self.assertEqual(expected, har_container.validate())
-        assert False # TODO: implement your test here
+    def test_validate_good(self):
+        #make sure good works
+        good_json = ('{"log": {"version": "1.2", "creator":'
+                     '{"version": "$Id$", "name": "Harpy"}, '
+                     '"entries": []}}')
+        har_container = har.HarContainer(good_json)
+
+    def test_validate_bad_json(self):        
+        #check for invalid json
+        invalid_json = '{"log": {"version": "1.2", "creator": {"version": "$Id$", "name": "Harpy"}, "entries": []}'
+        self.assertRaises(ValueError, har.HarContainer, invalid_json)
+        
+    def test_validate_missing_values(self):
+        for missing_values_json in ['{}']:
+            self.assertRaises(har.MissingValueException,
+                              har.HarContainer,
+                              missing_values_json)
+
+    def test_validate_bad_types(self):
+        for bad_types_json in ['{"log": {}}',
+                               '{"log":[]}',
+                               ('{"log": {"version": 1.2, "creator":'
+                                '{"version": "$Id$", "name": "Harpy"}, '
+                                '"entries": []}}'),
+                               ('{"log": {"version": 1.2, "creator":'
+                                '[], "entries": []}}'),
+                               ('{"log": {"version": "1.2", "creator":'
+                                '[], "entries": 1}}'),
+                               ]:
+            self.assertRaises(har.ValidationError,
+                              har.HarContainer,
+                              bad_types_json)
+            #add more validation tests...
 
 class TestLog(unittest.TestCase):
 

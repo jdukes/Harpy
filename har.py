@@ -276,6 +276,7 @@ class _MetaHar(object):
     # are uniq children
 
     def __init__(self, init_from=None, parent=None, empty=False):
+        #it should be possible to init without validataion
         """ This is the _MetaHar object. It is used as the meta class
         for other objects. It should never be instantiated directly.
         
@@ -411,16 +412,30 @@ class _MetaHar(object):
 
     def _check_field_types(self, field_defs):
         for fname, ftype in field_defs.iteritems():
-            if type(ftype) == list:
-                assert type(self.__dict__[fname]) in ftype, (
-                    "{0} filed '{1}' must be one of types: {2}"
-                    .format(self.__class__.__name__, fname, ftype))
-            else:
-                assert type(self.__dict__[fname]) is ftype, (
-                    "{0} filed '{1}' must be of type: {2}"
-                    .format(self.__class__.__name__, fname, ftype))
+            try:
+                if type(ftype) == list:
+                    assert type(self.__dict__[fname]) in ftype, (
+                        "{0} failed '{1}' must be one of types: {2}"
+                        .format(self.__class__.__name__, fname, ftype))
+                else:
+                    assert type(self.__dict__[fname]) is ftype, (
+                        "{0} failed '{1}' must be of type: {2}"
+                        .format(self.__class__.__name__, fname, ftype))
+            except Exception, e:
+                raise ValidationError(e.message)
+
+    def _check_empty(self, fields):
+        if not type(fields) is list:
+            fields=[fields]
+        for field in fields:
+            if not self.__dict__[field]:
+                raise ValidationError(
+                    "{0} failed '{1}' must not be empty"
+                    .format(self.__class__.__name__, field))
+            
 
 #------------------------------------------------------------------------------
+
 
 class _KeyValueHar(_MetaHar):
 
@@ -465,6 +480,7 @@ class HarContainer(_MetaHar):
         field_types = {"log": dict}
         self._has_fields(*field_types.keys())
         self._check_field_types(field_types)
+        self._check_empty("log")
 
 
 #------------------------------------------------------------------------------
