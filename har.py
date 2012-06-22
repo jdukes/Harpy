@@ -250,10 +250,15 @@ class ValidationError(Exception):
 
 
 class HarEncoder(json.JSONEncoder):
+    """json Encoder override.
+
+    This takes care of correctly encoding time objects into json.
+
+    """
 
     def default(self, obj):
         if isinstance(obj, _MetaHar):
-            return dict( (k,v) for k,v in obj.__dict__.iteritems()
+            return dict( (k, v) for k, v in obj.__dict__.iteritems()
                          if k != "_parent" )
         if isinstance(obj, datetime):
             if not obj.tzinfo: #handle zone info not being added by python
@@ -303,7 +308,7 @@ class _MetaHar(object):
             self.set_defaults()
 
     def __iter__(self):
-        return (v for k,v in self.__dict__.iteritems()
+        return (v for k, v in self.__dict__.iteritems()
                  if k != "_parent" and
                  (isinstance(v, _MetaHar)
                   or isinstance(v, list)
@@ -326,7 +331,7 @@ class _MetaHar(object):
         """Return a tuple of all objects that are children of the
         object on which the method is called.
         """
-        return tuple( str(k) for k,v in self.__dict__.iteritems()
+        return tuple( str(k) for k, v in self.__dict__.iteritems()
                  if (str(k) != "_parent" and
                      (isinstance(v, _MetaHar)
                       or isinstance(v, list)
@@ -426,7 +431,7 @@ class _MetaHar(object):
 
     def _check_empty(self, fields):
         if not type(fields) is list:
-            fields=[fields]
+            fields = [fields]
         for field in fields:
             if not self.__dict__[field]:
                 raise ValidationError(
@@ -589,8 +594,8 @@ class Page(_MetaHar):
     def _construct(self):
         try:
             self.startedDateTime = parser.parse(self.startedDateTime)
-        except Exception, e:
-            raise ValidationError("Failed to parse date: {0}".format(e))
+        except Exception, err:
+            raise ValidationError("Failed to parse date: {0}".format(err))
         self.pageTimings = PageTimings(self.pageTimings)
 
     def __repr__(self):
