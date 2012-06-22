@@ -375,7 +375,7 @@ class _MetaHar(object):
     def from_dict(self, json_dict):
         assert type(json_dict) is dict, "from_dict must be passed a dictionary"
         self.__dict__.update(json_dict)
-        self.validate()
+        self.validate_input()
         self._construct()
 
     def _construct(self):
@@ -395,7 +395,7 @@ class _MetaHar(object):
         ## later we'll write a json stream parser
         return json.dumps(self, indent=None, cls=HarEncoder)
 
-    def validate(self): #default behavior
+    def validate_input(self): #default behavior
         # change this to a couple of class vars
         field_types = {"name":[unicode, str],
                        "value":[unicode, str]}
@@ -424,7 +424,7 @@ class _MetaHar(object):
 
 class _KeyValueHar(_MetaHar):
 
-    def validate(self): #default behavior
+    def validate_input(self): #default behavior
         field_types = {"name":[unicode, str],
                        "value":[unicode, str]}
         self._has_fields(*field_types.keys())
@@ -461,7 +461,7 @@ class HarContainer(_MetaHar):
         also be used to reset a har to a default state."""
         self.log = Log()
 
-    def validate(self):
+    def validate_input(self):
         field_types = {"log": dict}
         self._has_fields(*field_types.keys())
         self._check_field_types(field_types)
@@ -472,7 +472,7 @@ class HarContainer(_MetaHar):
 
 class Log(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         self._has_fields("version", "creator", "entries")
         field_defs = {"version":[unicode, str],
                       "entries":list}
@@ -518,7 +518,7 @@ class Log(_MetaHar):
 
 class Creator(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         self._has_fields("name",
                          "version")
         field_defs = {"name": [unicode, str],
@@ -557,7 +557,7 @@ class Browser(Creator):
 
 class Page(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         self._has_fields("startedDateTime",
                          "id",
                          "title",
@@ -587,7 +587,7 @@ class Page(_MetaHar):
 
 class PageTimings(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         field_defs = {}
         if "onContentLoad" in self.__dict__:
             field_defs["onContentLoad"] = int
@@ -607,7 +607,7 @@ class PageTimings(_MetaHar):
 
 class Entry(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         field_defs = {"startedDateTime":[unicode, str]}
         self._has_fields("startedDateTime",
                          "request",
@@ -652,7 +652,7 @@ class Entry(_MetaHar):
 
 class Request(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         field_defs = {"method":[unicode, str], #perhaps these should
                                                #be under _has_fields
                       "url":[unicode, str],
@@ -840,7 +840,7 @@ class Request(_MetaHar):
 
 class Response(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         field_defs = {"status":int,
                       "statusText":[unicode,str],
                       "httpVersion":[unicode,str],
@@ -952,7 +952,7 @@ class Response(_MetaHar):
 
 class Cookie(_MetaHar):
 
-    def validate(self): #default behavior
+    def validate_input(self): #default behavior
         field_types = {"name":[unicode, str],
                        "value":[unicode, str]}
         self._has_fields(*field_types.keys())
@@ -1016,7 +1016,7 @@ class QueryString(_KeyValueHar):
 
 class PostData(_MetaHar):
 
-        def validate(self):
+        def validate_input(self):
             field_types = {"mimeType":[unicode, str],
                            "params":list,
                            "text":[unicode, str]}
@@ -1037,7 +1037,7 @@ class PostData(_MetaHar):
 
 class Param(_KeyValueHar):
 
-    def validate(self): #default behavior
+    def validate_input(self): #default behavior
         field_types = {"name":[unicode, str]}
         self._has_fields(*field_types.keys())
         for field in ["value", "fileName", "contentType", "comment"]:
@@ -1061,7 +1061,7 @@ class Param(_KeyValueHar):
 
 class Content(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         self._has_fields("size",
                          "mimeType")
         field_types = {"size":int,
@@ -1082,7 +1082,7 @@ class Content(_MetaHar):
 
 class Cache(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         field_types={}
         if "comment" in self.__dict__:
             field_types["comment"] = [unicode, str]
@@ -1102,7 +1102,7 @@ class Cache(_MetaHar):
 
 class RequestCache(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         field_types = {"lastAccess":[unicode, str],
                        "eTag":[unicode, str],
                        "hitCount": int}
@@ -1119,7 +1119,7 @@ class RequestCache(_MetaHar):
 
 class Timings(_MetaHar):
 
-    def validate(self):
+    def validate_input(self):
         field_defs = {"send":int,
                       "wait":int,
                       "receive":int}
@@ -1162,3 +1162,4 @@ if __name__ == "__main__":
             test()
     else:
         usage()
+
