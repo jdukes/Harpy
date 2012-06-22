@@ -89,43 +89,43 @@ class TestHarContainer(unittest.TestCase):
 class TestLog(unittest.TestCase):
 
     def test_default_init_(self):
-        log = Log()
+        log = har.Log()
 
     def test_empty_init_(self):
-        log = Log(empty=True)
+        log = har.Log(empty=True)
 
     def test_default_repr_(self):
         expected = "<HAR 1.2 Log created by Harpy $Id$: ('entries', 'version', 'creator')>"
-        log = Log()
+        log = har.Log()
         self.assertEqual(expected, log.__repr__())
 
 
     def test_empty_repr_(self):
-        log = Log(empty=True)
+        log = har.Log(empty=True)
         # self.assertEqual(expected, log.__repr__())
         assert False # TODO: implement your test here
 
     def test_validate(self):
-        # log = Log()
+        # log = har.Log()
         # self.assertEqual(expected, log.validate())
         assert False # TODO: implement your test here
 
 class TestCreator(unittest.TestCase):
 
     def test_default_init_(self):
-        creator = Creator()
+        creator = har.Creator()
 
     def test_empty_init_(self):
-        creator = Creator(empty=True)
+        creator = har.Creator(empty=True)
 
     def test_default_repr_(self):
         expected = "<Created by Harpy: ('version', 'name')>"
-        creator = Creator()
+        creator = har.Creator()
         self.assertEqual(expected, creator.__repr__())
 
     def test_empty_repr_(self):
         expected = r"<Created by [uninitialized]: (empty)>"
-        creator = Creator(emtpy=True)
+        creator = har.Creator(empty=True)
         self.assertEqual(expected, creator.__repr__())
 
     def test_validate(self):
