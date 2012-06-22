@@ -1163,3 +1163,6 @@ if __name__ == "__main__":
     else:
         usage()
 
+# Local variables:
+# eval: (add-hook 'after-save-hook '(lambda () (shell-command "pylint har.py > lint")) nil t)
+# end:
