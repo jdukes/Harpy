@@ -11,6 +11,34 @@ path.append('./')
 path.append('../')
 import har
 
+################################################################################
+# Meta Test Cases
+################################################################################
+
+class ObjectTest(unittest.TestCase):
+
+    def test_default_init_(self):
+        self.obj()
+
+    def test_empty_init_(self):
+        self.obj(empty=True)
+
+    def test_validate_missing_values(self):
+        for missing_values_json in ['{}']:
+            self.assertRaises(har.MissingValueException,
+                              self.obj,
+                              missing_values_json)
+
+    def test_validate_bad_json(self):
+        #check if invalid json fails
+        invalid_json = 'z'
+        self.assertRaises(ValueError, self.obj, invalid_json)
+
+
+################################################################################
+# Test Cases
+################################################################################
+
 class TestHarEncoder(unittest.TestCase):
 
     def setUp(self):
@@ -61,22 +89,19 @@ class test__KeyValueHar(unittest.TestCase):
         with self.assertRaises(AssertionError):
             har._KeyValueHar()
 
-class TestHarContainer(unittest.TestCase):
+class TestHarContainer(ObjectTest):
 
-    def test_default_init_(self):
-        har_container = har.HarContainer()
-
-    def test_empty_init_(self):        
-        har_container = har.HarContainer(empty=True)
+    def setUp(self):
+        self.obj = har.HarContainer
 
     def test_default_repr__(self):
         expected = r"<HarContainer: ('log',)>"
-        har_container = har.HarContainer()
+        har_container = self.obj()
         self.assertEqual(expected, har_container.__repr__())
 
     def test_empty_repr__(self):
         expected = r"<HarContainer: (empty)>"
-        har_container = har.HarContainer(empty=True)
+        har_container = self.obj(empty=True)
         self.assertEqual(expected, har_container.__repr__())
         
     def test_validate_good(self):
@@ -84,19 +109,13 @@ class TestHarContainer(unittest.TestCase):
         good_json = ('{"log": {"version": "1.2", "creator":'
                      '{"version": "$Id$", "name": "Harpy"}, '
                      '"entries": []}}')
-        har_container = har.HarContainer(good_json)
+        har_container = self.obj(good_json)
 
     def test_validate_bad_json(self):        
         #check if invalid json fails
         invalid_json = 'z'
-        self.assertRaises(ValueError, har.HarContainer, invalid_json)
+        self.assertRaises(ValueError, self.obj, invalid_json)
         
-    def test_validate_missing_values(self):
-        for missing_values_json in ['{}']:
-            self.assertRaises(har.MissingValueException,
-                              har.HarContainer,
-                              missing_values_json)
-
     def test_validate_bad_types(self):
         for bad_types_json in ['{"log": {}}',
                                '{"log":[]}',
@@ -104,26 +123,23 @@ class TestHarContainer(unittest.TestCase):
                                '{"log":"x"}',
                                ]:
             self.assertRaises(har.ValidationError,
-                              har.HarContainer,
+                              self.obj,
                               bad_types_json)
             #add more validation tests...
 
-class TestLog(unittest.TestCase):
+class TestLog(ObjectTest):
 
-    def test_default_init_(self):
-        log = har.Log()
-
-    def test_empty_init_(self):
-        log = har.Log(empty=True)
+    def setUp(self):
+        self.obj = har.Log
 
     def test_default_repr_(self):
         expected = "<HAR 1.2 Log created by Harpy $Id$: ('entries', 'version', 'creator')>"
-        log = har.Log()
+        log = self.obj()
         self.assertEqual(expected, log.__repr__())
 
     def test_empty_repr_(self):
         expected = "<Log object not fully initilized>"
-        log = har.Log(empty=True)
+        log = self.obj(empty=True)
         self.assertEqual(expected, log.__repr__())
 
     def test_validate_good(self):
@@ -131,18 +147,7 @@ class TestLog(unittest.TestCase):
         good_json = ('{"version": "1.2", "creator":'
                      '{"version": "$Id$", "name": "Harpy"}, '
                      '"entries": []}')
-        log = har.Log(good_json)
-
-    def test_validate_bad_json(self):        
-        #check if invalid json fails
-        invalid_json = 'z'
-        self.assertRaises(ValueError, har.Log, invalid_json)
-        
-    def test_validate_missing_values(self):
-        for missing_values_json in ['{}']:
-            self.assertRaises(har.MissingValueException,
-                              har.Log,
-                              missing_values_json)
+        log = self.obj(good_json)
 
     def test_validate_bad_types(self):
         for bad_types_json in [('{"version": 1.2, "creator":'
@@ -152,16 +157,13 @@ class TestLog(unittest.TestCase):
                                ('{"version": "1.2", "creator":[], "entries": 1}'),
                                ]:
             self.assertRaises(har.ValidationError,
-                              har.Log,
+                              self.obj,
                               bad_types_json)
 
-class TestCreator(unittest.TestCase):
+class TestCreator(ObjectTest):
 
-    def test_default_init_(self):
-        creator = har.Creator()
-
-    def test_empty_init_(self):
-        creator = har.Creator(empty=True)
+    def setUp(self):
+        self.obj = har.Creator
 
     def test_default_repr_(self):
         expected = "<Created by Harpy: ('version', 'name')>"
@@ -178,17 +180,6 @@ class TestCreator(unittest.TestCase):
         good_json = '{"version": "$Id$", "name": "Harpy"}'
         log = har.Creator(good_json)
 
-    def test_validate_bad_json(self):        
-        #check if invalid json fails
-        invalid_json = 'z'
-        self.assertRaises(ValueError, har.Creator, invalid_json)
-        
-    def test_validate_missing_values(self):
-        for missing_values_json in ['{}']:
-            self.assertRaises(har.MissingValueException,
-                              har.Creator,
-                              missing_values_json)
-
     def test_validate_bad_types(self):
         for bad_types_json in ['{"version": 3, "name": "Harpy"}',
                                '{"version": "$Id$", "name": 3}'
@@ -197,14 +188,17 @@ class TestCreator(unittest.TestCase):
                               har.Creator,
                               bad_types_json)
 
+class TestBrowser(TestCreator):
 
-class TestBrowser(unittest.TestCase):
-    def test___repr__(self):
-        # browser = Browser()
-        # self.assertEqual(expected, browser.__repr__())
-        assert False # TODO: implement your test here
+    def setUp(self):
+        self.obj = har.Browser
 
-class TestPage(unittest.TestCase):
+
+class TestPage(ObjectTest):
+
+    def setUp(self):
+        self.obj = har.Page
+    
     def test___repr__(self):
         # page = Page()
         # self.assertEqual(expected, page.__repr__())
@@ -215,7 +209,7 @@ class TestPage(unittest.TestCase):
         # self.assertEqual(expected, page.validate())
         assert False # TODO: implement your test here
 
-class TestPageTimings(unittest.TestCase):
+class TestPageTimings(ObjectTest):
     def test___repr__(self):
         # page_timings = PageTimings()
         # self.assertEqual(expected, page_timings.__repr__())
@@ -226,7 +220,7 @@ class TestPageTimings(unittest.TestCase):
         # self.assertEqual(expected, page_timings.validate())
         assert False # TODO: implement your test here
 
-class TestEntry(unittest.TestCase):
+class TestEntry(ObjectTest):
     def test___repr__(self):
         # entry = Entry()
         # self.assertEqual(expected, entry.__repr__())
@@ -237,7 +231,7 @@ class TestEntry(unittest.TestCase):
         # self.assertEqual(expected, entry.validate())
         assert False # TODO: implement your test here
 
-class TestRequest(unittest.TestCase):
+class TestRequest(ObjectTest):
     def test___repr__(self):
         # request = Request()
         # self.assertEqual(expected, request.__repr__())
@@ -273,7 +267,7 @@ class TestRequest(unittest.TestCase):
         # self.assertEqual(expected, request.validate())
         assert False # TODO: implement your test here
 
-class TestResponse(unittest.TestCase):
+class TestResponse(ObjectTest):
     def test___repr__(self):
         # response = Response()
         # self.assertEqual(expected, response.__repr__())
@@ -299,7 +293,7 @@ class TestResponse(unittest.TestCase):
         # self.assertEqual(expected, response.validate())
         assert False # TODO: implement your test here
 
-class TestCookie(unittest.TestCase):
+class TestCookie(ObjectTest):
     def test___repr__(self):
         # cookie = Cookie()
         # self.assertEqual(expected, cookie.__repr__())
@@ -315,13 +309,13 @@ class TestCookie(unittest.TestCase):
         # self.assertEqual(expected, cookie.validate())
         assert False # TODO: implement your test here
 
-class TestPostData(unittest.TestCase):
+class TestPostData(ObjectTest):
     def test_validate(self):
         # post_data = PostData()
         # self.assertEqual(expected, post_data.validate())
         assert False # TODO: implement your test here
 
-class TestParam(unittest.TestCase):
+class TestParam(ObjectTest):
     def test___repr__(self):
         # param = Param()
         # self.assertEqual(expected, param.__repr__())
@@ -332,7 +326,7 @@ class TestParam(unittest.TestCase):
         # self.assertEqual(expected, param.validate())
         assert False # TODO: implement your test here
 
-class TestContent(unittest.TestCase):
+class TestContent(ObjectTest):
     def test___repr__(self):
         # content = Content()
         # self.assertEqual(expected, content.__repr__())
@@ -343,7 +337,7 @@ class TestContent(unittest.TestCase):
         # self.assertEqual(expected, content.validate())
         assert False # TODO: implement your test here
 
-class TestCache(unittest.TestCase):
+class TestCache(ObjectTest):
     def test___repr__(self):
         # cache = Cache()
         # self.assertEqual(expected, cache.__repr__())
@@ -354,13 +348,13 @@ class TestCache(unittest.TestCase):
         # self.assertEqual(expected, cache.validate())
         assert False # TODO: implement your test here
 
-class TestRequestCache(unittest.TestCase):
+class TestRequestCache(ObjectTest):
     def test_validate(self):
         # request_cache = RequestCache()
         # self.assertEqual(expected, request_cache.validate())
         assert False # TODO: implement your test here
 
-class TestTimings(unittest.TestCase):
+class TestTimings(ObjectTest):
     def test___repr__(self):
         # timings = Timings()
         # self.assertEqual(expected, timings.__repr__())
@@ -371,7 +365,7 @@ class TestTimings(unittest.TestCase):
         # self.assertEqual(expected, timings.validate())
         assert False # TODO: implement your test here
 
-class TestTest(unittest.TestCase):
+class TestTest(ObjectTest):
     def test_test(self):
         # self.assertEqual(expected, test())
         assert False # TODO: implement your test here
