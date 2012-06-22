@@ -40,7 +40,7 @@ Some objects have default values which are pre-set::
 
 To not set default values on object creation disable default settings::
 
-    In [5]: r = Request(defaults=False)
+    In [5]: r = Request(empty=True)
     
     In [6]: r
     Out[6]: <Request to '[undefined]': (empty)>
@@ -177,6 +177,8 @@ from base64 import b64encode, b64decode
 # Constants
 ###############################################################################
 
+__version__ = "$Id$"
+
 TIMEZONE = tz.tzlocal()
 
 METHODS = ["OPTIONS",
@@ -272,7 +274,7 @@ class _MetaHar(object):
     # this needs to be a tree so child objects can validate that they
     # are uniq children
 
-    def __init__(self, init_from=None, parent=None, defaults=True):
+    def __init__(self, init_from=None, parent=None, empty=False):
         """ This is the _MetaHar object. It is used as the meta class
         for other objects. It should never be instantiated directly.
         
@@ -295,7 +297,7 @@ class _MetaHar(object):
                 fd.close()
             else:
                 self.from_dict(init_from)
-        elif defaults:
+        elif not empty:
             self.set_defaults()
 
     def __iter__(self):
@@ -381,10 +383,9 @@ class _MetaHar(object):
         pass
 
     def set_defaults(self):
-        """In general this method sets defaults for objects not
-        instantiated via 'init_from' if 'set_defaults' parameter is
-        not set to False. It can also be used to reset a har to a
-        default state."""
+        """This method sets defaults for objects not instantiated via
+        'init_from' if 'empty' parameter is set to False (default). It can
+        also be used to reset a har to a default state."""
         pass
 
     def to_json(self):
@@ -442,6 +443,7 @@ class _KeyValueHar(_MetaHar):
 
 #------------------------------------------------------------------------------
 
+
 class HarContainer(_MetaHar):
 
     def __repr__(self):
@@ -452,10 +454,17 @@ class HarContainer(_MetaHar):
     def _construct(self):
         self.log = Log(self.log, self)
 
+    def set_defaults(self):
+        """This method sets defaults for objects not instantiated via
+        'init_from' if 'empty' parameter is set to False (default). It can
+        also be used to reset a har to a default state."""
+        self.log = Log()
+
     def validate(self):
         field_types = {"log": dict}
         self._has_fields(*field_types.keys())
         self._check_field_types(field_types)
+
 
 #------------------------------------------------------------------------------
 
@@ -481,6 +490,15 @@ class Log(_MetaHar):
         if "pages" in self.__dict__:
             self.pages = [ Page(page) for page in self.pages]
         self.entries = [ Entry(entry) for entry in self.entries]
+
+    def set_defaults(self):
+        """This method sets defaults for objects not instantiated via
+        'init_from' if 'empty' parameter is set to False (default). It can
+        also be used to reset a har to a default state.
+
+        """
+        pass
+        #self.creator = Creator("Harpy " + __version__)
 
     def __repr__(self):
         try:
@@ -652,6 +670,11 @@ class Request(_MetaHar):
                 self.cookies.sort(key=lambda i: i._sequence)
 
     def set_defaults(self):
+        """This method sets defaults for objects not instantiated via
+        'init_from' if 'empty' parameter is set to False (default). It can
+        also be used to reset a har to a default state.
+
+        """
         self.from_dict({"cookies": [],
                         "url": "http://example.com/",
                         "queryString": [],
@@ -1127,4 +1150,3 @@ if __name__ == "__main__":
             test()
     else:
         usage()
-    
