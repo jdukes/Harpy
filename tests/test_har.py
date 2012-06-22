@@ -49,65 +49,10 @@ class TestHarEncoder(unittest.TestCase):
 
 class test__MetaHar(unittest.TestCase):
 
-    def test___contains__(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.__contains__(obj))
-        assert False # TODO: implement your test here
-
     def test___init__(self):
         #Should not ever instantiate.
         with self.assertRaises(AssertionError):
             har._MetaHar()
-
-    def test___iter__(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.__iter__())
-        assert False # TODO: implement your test here
-
-    def test___repr__(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.__repr__())
-        assert False # TODO: implement your test here
-
-    def test___str__(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.__str__())
-        assert False # TODO: implement your test here
-
-    def test_from_dict(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.from_dict(json_dict))
-        assert False # TODO: implement your test here
-
-    def test_from_json(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.from_json(json_data))
-        assert False # TODO: implement your test here
-
-    def test_get_children(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.get_children())
-        assert False # TODO: implement your test here
-
-    def test_replace(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.replace(**kwarg))
-        assert False # TODO: implement your test here
-
-    def test_set_defaults(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.set_defaults())
-        assert False # TODO: implement your test here
-
-    def test_to_json(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.to_json())
-        assert False # TODO: implement your test here
-
-    def test_validate(self):
-        # __meta_har = _MetaHar(init_from, parent, defaults)
-        # self.assertEqual(expected, __meta_har.validate())
-        assert False # TODO: implement your test here
 
 class test__KeyValueHar(unittest.TestCase):
 
@@ -116,23 +61,11 @@ class test__KeyValueHar(unittest.TestCase):
         with self.assertRaises(AssertionError):
             har._KeyValueHar()
 
-
-    def test___eq__(self):
-        # __key_value_har = _KeyValueHar()
-        # self.assertEqual(expected, __key_value_har.__eq__(other))
-        assert False # TODO: implement your test here
-
-    def test___repr__(self):
-        # __key_value_har = _KeyValueHar()
-        # self.assertEqual(expected, __key_value_har.__repr__())
-        assert False # TODO: implement your test here
-
-    def test_validate(self):
-        # __key_value_har = _KeyValueHar()
-        # self.assertEqual(expected, __key_value_har.validate())
-        assert False # TODO: implement your test here
-
 class TestHarContainer(unittest.TestCase):
+
+    def test_default_init_(self):
+        har_container = HarContainer()
+        
 
     def test___init__(self):
         har_container = HarContainer()
