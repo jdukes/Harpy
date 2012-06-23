@@ -342,9 +342,16 @@ class _MetaHar(object):
             self.__dict__.get('name',"[undefined]"),
             self._get_printable_kids())
 
+    def _get(self, name, default='[uninitialized]'):
+        """Internal method to return a default value.
+        """
+        return (name in self and
+                self.__getattribute__(name)) or default
+
     def _get_printable_kids(self):
         """Return a tuple of all objects that are children of the
         object on which the method is called.
+        
         """
         return tuple( str(k) for k, v in self.__dict__.iteritems()
                  if (str(k) != "_parent" and
@@ -574,7 +581,7 @@ class Creator(_MetaHar):
 
     def __repr__(self):
         return "<Created by {0}: {1}>".format(
-            ("name" in self and self.name) or '[uninitialized]',
+            self._get("name"),
             self._get_printable_kids())
 
 
@@ -585,7 +592,7 @@ class Browser(Creator):
 
     def __repr__(self):
         return "<Browser '{0}': {1} >".format(
-            self.name, self._get_printable_kids())
+            self._get("name"), self._get_printable_kids())
 
 
 #------------------------------------------------------------------------------
@@ -629,7 +636,7 @@ class Page(_MetaHar):
 
     def __repr__(self):
         return "<Page with title '{0}': {1}>".format(
-            "title" in self and self.title or "[undefined]",
+            self.get("title"),
             self._get_printable_kids())
 
 
@@ -672,7 +679,7 @@ class Entry(_MetaHar):
         if "connection" in self:
             field_defs["connection"] = [unicode, str]
         self._check_field_types(field_defs)
-        if "pageref" in self and "_parent" in self.__dict__ and self._parent:
+        if "pageref" in self and "_parent" in self and self._parent:
             for entry in self._parent.entries: #write a test case for this
                 if entry.pageref == self.pageref:
                     raise ValidationError("Entry pageref {0} must be uniq, "
@@ -775,7 +782,7 @@ class Request(_MetaHar):
 
     def __repr__(self):
         return "<Request to '{0}': {1}>".format(
-            ("url" in self and self.url) or  "[undefined]",
+            self._get("url"),
             self._get_printable_kids())
 
     def devour(self, req, proto='http', comment='', keep_b64_raw=False):
@@ -917,8 +924,8 @@ class Response(_MetaHar):
     def __repr__(self):
         # I need to make the naming thing a function....
         return "<Response with code '{0}' - '{1}': {2}>".format(
-            ("status" in self and self.status ) or "[undefined]",
-            ("statusText" in self and self.statusText) or "[undefined]",
+            self._get("status"),
+            self._get("statusText"),
             self._get_printable_kids())
 
     def _construct(self):
@@ -1024,8 +1031,8 @@ class Cookie(_MetaHar):
 
     def __repr__(self):
         return "<Cookie '{0}' set to '{1}': {2}>".format(
-            ("name" in self and self.name) or "[undefined]",
-            ("name" in self and self.value) or "[undefined]",
+            self._get("name"),
+            self._get("value"),
             self._get_printable_kids())
 
     def devour(self, cookie_string):

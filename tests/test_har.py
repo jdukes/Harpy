@@ -199,11 +199,9 @@ class TestBrowser(TestCreator):
         self.assertEqual(expected, obj.__repr__())
 
     def test_empty_repr_(self):
-        expected = r"<Created by [uninitialized]: (empty)>"
+        expected = r"<Browser '[uninitialized]': (empty) >"
         obj = self.obj(empty=True)
         self.assertEqual(expected, obj.__repr__())
-        assert False #this needs to be finished
-
 
 class TestPage(ObjectTest):
 
