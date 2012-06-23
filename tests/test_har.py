@@ -15,7 +15,10 @@ import har
 # Meta Test Cases
 ################################################################################
 
-class ObjectTest(unittest.TestCase):
+class HarObjectTest(unittest.TestCase):
+
+    def setUp(self):
+        self.skipTest("This is a test that is applied to other tests")
 
     def test_default_init_(self):
         self.obj()
@@ -89,7 +92,7 @@ class test__KeyValueHar(unittest.TestCase):
         with self.assertRaises(AssertionError):
             har._KeyValueHar()
 
-class TestHarContainer(ObjectTest):
+class TestHarContainer(HarObjectTest):
 
     def setUp(self):
         self.obj = har.HarContainer
@@ -127,7 +130,7 @@ class TestHarContainer(ObjectTest):
                               bad_types_json)
             #add more validation tests...
 
-class TestLog(ObjectTest):
+class TestLog(HarObjectTest):
 
     def setUp(self):
         self.obj = har.Log
@@ -160,7 +163,7 @@ class TestLog(ObjectTest):
                               self.obj,
                               bad_types_json)
 
-class TestCreator(ObjectTest):
+class TestCreator(HarObjectTest):
 
     def setUp(self):
         self.obj = har.Creator
@@ -203,13 +206,13 @@ class TestBrowser(TestCreator):
         obj = self.obj(empty=True)
         self.assertEqual(expected, obj.__repr__())
 
-class TestPage(ObjectTest):
+class TestPage(HarObjectTest):
 
     def setUp(self):
         self.obj = har.Page
     
     def test_default_repr__(self):
-        expected = r"<Page with title '[invalid]': ('pageTimings', 'title')>"
+        expected = r"<Page with title '[Title could not be determined]': ('pageTimings', 'title')>"
         page = self.obj()
         self.assertEqual(expected, page.__repr__())
 
@@ -226,7 +229,7 @@ class TestPage(ObjectTest):
 
     #!!! need to add a test that a non-uniq page cannot be added to an entry
 
-class TestPageTimings(ObjectTest):
+class TestPageTimings(HarObjectTest):
     def test___repr__(self):
         # page_timings = PageTimings()
         # self.assertEqual(expected, page_timings.__repr__())
@@ -237,7 +240,7 @@ class TestPageTimings(ObjectTest):
         # self.assertEqual(expected, page_timings.validate())
         assert False # TODO: implement your test here
 
-class TestEntry(ObjectTest):
+class TestEntry(HarObjectTest):
     def test___repr__(self):
         # entry = Entry()
         # self.assertEqual(expected, entry.__repr__())
@@ -248,7 +251,7 @@ class TestEntry(ObjectTest):
         # self.assertEqual(expected, entry.validate())
         assert False # TODO: implement your test here
 
-class TestRequest(ObjectTest):
+class TestRequest(HarObjectTest):
     def test___repr__(self):
         # request = Request()
         # self.assertEqual(expected, request.__repr__())
@@ -284,7 +287,7 @@ class TestRequest(ObjectTest):
         # self.assertEqual(expected, request.validate())
         assert False # TODO: implement your test here
 
-class TestResponse(ObjectTest):
+class TestResponse(HarObjectTest):
     def test___repr__(self):
         # response = Response()
         # self.assertEqual(expected, response.__repr__())
@@ -310,7 +313,7 @@ class TestResponse(ObjectTest):
         # self.assertEqual(expected, response.validate())
         assert False # TODO: implement your test here
 
-class TestCookie(ObjectTest):
+class TestCookie(HarObjectTest):
     def test___repr__(self):
         # cookie = Cookie()
         # self.assertEqual(expected, cookie.__repr__())
@@ -326,13 +329,13 @@ class TestCookie(ObjectTest):
         # self.assertEqual(expected, cookie.validate())
         assert False # TODO: implement your test here
 
-class TestPostData(ObjectTest):
+class TestPostData(HarObjectTest):
     def test_validate(self):
         # post_data = PostData()
         # self.assertEqual(expected, post_data.validate())
         assert False # TODO: implement your test here
 
-class TestParam(ObjectTest):
+class TestParam(HarObjectTest):
     def test___repr__(self):
         # param = Param()
         # self.assertEqual(expected, param.__repr__())
@@ -343,7 +346,7 @@ class TestParam(ObjectTest):
         # self.assertEqual(expected, param.validate())
         assert False # TODO: implement your test here
 
-class TestContent(ObjectTest):
+class TestContent(HarObjectTest):
     def test___repr__(self):
         # content = Content()
         # self.assertEqual(expected, content.__repr__())
@@ -354,7 +357,7 @@ class TestContent(ObjectTest):
         # self.assertEqual(expected, content.validate())
         assert False # TODO: implement your test here
 
-class TestCache(ObjectTest):
+class TestCache(HarObjectTest):
     def test___repr__(self):
         # cache = Cache()
         # self.assertEqual(expected, cache.__repr__())
@@ -365,13 +368,13 @@ class TestCache(ObjectTest):
         # self.assertEqual(expected, cache.validate())
         assert False # TODO: implement your test here
 
-class TestRequestCache(ObjectTest):
+class TestRequestCache(HarObjectTest):
     def test_validate(self):
         # request_cache = RequestCache()
         # self.assertEqual(expected, request_cache.validate())
         assert False # TODO: implement your test here
 
-class TestTimings(ObjectTest):
+class TestTimings(HarObjectTest):
     def test___repr__(self):
         # timings = Timings()
         # self.assertEqual(expected, timings.__repr__())
@@ -382,7 +385,7 @@ class TestTimings(ObjectTest):
         # self.assertEqual(expected, timings.validate())
         assert False # TODO: implement your test here
 
-class TestTest(ObjectTest):
+class TestTest(HarObjectTest):
     def test_test(self):
         # self.assertEqual(expected, test())
         assert False # TODO: implement your test here

@@ -262,7 +262,7 @@ class InvalidChild(Exception):
 def _localize_datetime(dto):
     if not dto.tzinfo: #handle zone info not being added by python
         dto = dto.replace(tzinfo=TIMEZONE)
-        return dto
+    return dto
     #according to the spec this needs to be ISO 8601
     #YYYY-MM-DDThh:mm:ss.sTZD
 
@@ -279,7 +279,7 @@ class HarEncoder(json.JSONEncoder):
             return dict( (k, v) for k, v in obj.__dict__.iteritems()
                          if k != "_parent" )
         if isinstance(obj, datetime):
-            obj = localize(obj)
+            obj = _localize_datetime(obj)
             return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
 
@@ -636,7 +636,7 @@ class Page(_MetaHar):
 
     def __repr__(self):
         return "<Page with title '{0}': {1}>".format(
-            self.get("title"),
+            self._get("title"),
             self._get_printable_kids())
 
 
