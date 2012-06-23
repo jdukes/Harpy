@@ -37,7 +37,8 @@ Some objects have default values which are pre-set::
     In [3]: r = Request()
     
     In [4]: r
-    Out[4]: <Request to 'http://example.com/': ('cookies', 'url', 'queryString', 'headers', 'method', 'httpVersion')>
+    Out[4]: <Request to 'http://example.com/': ('cookies', 'url',
+                'queryString', 'headers', 'method', 'httpVersion')>
 
 To not set default values on object creation disable default settings::
 
@@ -58,10 +59,13 @@ children. If there are no children, the child list will show as
 A har object can also be initialized from a string of json, a file
 that contains json, or a dictionary::
 
-     In [8]: r = Request(r'{"cookies": [], "url": "http://example.com/foobarbaz", ...)
+     In [8]: r = Request(r'{"cookies": [], "url":
+                          "http://example.com/foobarbaz", ...)
      
      In [9]: r
-     Out[9]: <Request to 'http://example.com/foobarbaz': ('cookies', 'url', 'queryString', 'headers', 'httpVersion', 'method')>
+     Out[9]: <Request to 'http://example.com/foobarbaz':
+                 ('cookies', 'url', 'queryString', 'headers',
+                  'httpVersion', 'method')>
      
      In [10]: hc = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
      
@@ -115,7 +119,8 @@ It is likewise trivial to search for items, or associate requests and
 responses. For example, finding the response code for each url
 requested if the url contains 'www.google.com' can be easily done::
 
-    In [21]: [ (e.request.url, e.response.status) for e in hc.log.entries if 'www.google.com' in e.request.url ]
+    In [21]: [ (e.request.url, e.response.status) for e in hc.log.entries
+               if 'www.google.com' in e.request.url ]
     Out[21]: 
     [(u'http://www.google.com/', 200),
      (u'http://www.google.com/intl/en_ALL/images/srpr/logo1w.png', 200),
@@ -158,7 +163,6 @@ bug report.
 """
 
 import json
-import copy
 from StringIO import StringIO
 from socket import inet_pton, AF_INET6, AF_INET #used to validate ip addresses
 from socket import error as socket_error #used to validate ip addresses
@@ -171,7 +175,6 @@ except ImportError:
            "python-dateutil` or `easy_install dateutil`.")
     raise
 from datetime import datetime
-from time import tzname
 from base64 import b64encode, b64decode
 
 ##############################################################################
@@ -181,41 +184,6 @@ from base64 import b64encode, b64decode
 __version__ = "$Id$"
 
 TIMEZONE = tz.tzlocal()
-
-METHODS = ["OPTIONS",
-           "GET",
-           "HEAD",
-           "POST",
-           "PUT",
-           "DELETE",
-           "TRACE",
-           "BREW", #added for RFC2324 compliance
-           "WHEN", #added for RFC2324 compliance
-           "CONNECT", #for proxy, request coming in as this
-           "PROPFIND",
-           "PROPPATCH",
-           "MKCOL",
-           "COPY",
-           "MOVE",
-           "LOCK",
-           "UNLOCK",
-           "VERSION-CONTROL",
-           "REPORT",
-           "CHECKOUT",
-           "CHECKIN",
-           "UNCHECKOUT",
-           "MKWORKSPACE",
-           "UPDATE",
-           "LABEL",
-           "MERGE",
-           "BASELINE-CONTROL",
-           "MKACTIVITY",
-           "ORDERPATCH",
-           "ACL",
-           "PATCH",
-           "SEARCH",
-           "ARBITRARY"]
-
 
 ###############################################################################
 # Exceptions
@@ -229,8 +197,8 @@ class MissingValueException(Exception):
         self.in_class = in_class
 
     def __str__(self):
-        return ('Field "{0}" missing from input while trying to instantiate "{1}"'
-                .format(
+        return (('Field "{0}" missing from input '
+                'while trying to instantiate "{1}"').format(
                     self.value,
                     self.in_class))
 
@@ -258,6 +226,7 @@ class InvalidChild(Exception):
 ###############################################################################
 # Interface Functions and Classes
 ###############################################################################
+
 
 def _localize_datetime(dto):
     if not dto.tzinfo: #handle zone info not being added by python
@@ -636,7 +605,7 @@ class Page(_MetaHar):
 
     def __repr__(self):
         return "<Page with title '{0}': {1}>".format(
-            self._get("title"),
+            self._get("title",'[undefined]'),
             self._get_printable_kids())
 
 
@@ -693,7 +662,8 @@ class Entry(_MetaHar):
                 except socket_error:
                     raise ValidationError("Invalid IP address {0}: "
                                           "Address does not seem to be either "
-                                          "IP4 or IP6".format(self.serverIPAddress))
+                                          "IP4 or IP6".format(
+                                              self.serverIPAddress))
 
     def _construct(self):
         self.request = Request(self.request)
@@ -749,8 +719,10 @@ class Request(_MetaHar):
                         "url": "http://example.com/",
                         "queryString": [],
                         "headers": [{"name": "Accept", "value": "*/*"},
-                                    {"name": "Accept-Language", "value": "en-US"},
-                                    {"name": "Accept-Encoding", "value": "gzip"},
+                                    {"name": "Accept-Language",
+                                     "value": "en-US"},
+                                    {"name": "Accept-Encoding",
+                                     "value": "gzip"},
                                     {"name": "User-Agent", "value":
                                      ("Harpy (if you see this in your logs,"
                                       "someone made a mistake)")}],
@@ -777,7 +749,7 @@ class Request(_MetaHar):
         except:
             pass
         else:
-            h = Header({"name":name,"value":value})
+            h = Header({"name":name, "value":value})
         headers.append(h)
 
     def __repr__(self):
@@ -839,13 +811,14 @@ class Request(_MetaHar):
                 seq = 0
                 for param in body.split('&'):
                     if "=" in param:
-                        name, value = param.split('=',1) #= is a valid
-                                                         #character in
-                                                         #values
+                        name, value = param.split('=', 1) #= is a valid
+                                                          #character in
+                                                          #values
                     else:
                         name = param
                         value = ""
-                    param = {"name": name, "value": value} # build unit test for empty values
+                    param = {"name": name, "value": value}
+                    # build unit test for empty values
                     param["_sequence"] = seq
                     postData["params"].append(param)
                     seq += 1
@@ -1046,7 +1019,7 @@ class Cookie(_MetaHar):
             return
         for attr in values[1:]:
             if '=' in attr:
-                name, value = attr.split('=',1)
+                name, value = attr.split('=', 1)
                 self.__dict__[name.lower()] = value
             else:
                 if attr == "Secure":
@@ -1074,20 +1047,20 @@ class QueryString(_KeyValueHar):
 
 class PostData(_MetaHar):
 
-        def validate_input(self):
-            field_types = {"mimeType":[unicode, str],
-                           "params":list,
-                           "text":[unicode, str]}
-            self._has_fields(*field_types.keys())
-            if "comment" in self.__dict__:
-                field_types["comment"] = [unicode, str]
-            self._check_field_types(field_types)
+    def validate_input(self):
+        field_types = {"mimeType":[unicode, str],
+                       "params":list,
+                       "text":[unicode, str]}
+        self._has_fields(*field_types.keys())
+        if "comment" in self.__dict__:
+            field_types["comment"] = [unicode, str]
+        self._check_field_types(field_types)
 
-        def _construct(self):
-            if "params" in self.__dict__:
-                self.params = [ Param(param) for param in self.params]
-                if all('_sequence' in param for param in self.params):
-                    self.params.sort(key=lambda i: i._sequence)
+    def _construct(self):
+        if "params" in self.__dict__:
+            self.params = [ Param(param) for param in self.params]
+            if all('_sequence' in param for param in self.params):
+                self.params.sort(key=lambda i: i._sequence)
 
 
 #------------------------------------------------------------------------------
@@ -1141,7 +1114,7 @@ class Content(_MetaHar):
 class Cache(_MetaHar):
 
     def validate_input(self):
-        field_types={}
+        field_types = {}
         if "comment" in self.__dict__:
             field_types["comment"] = [unicode, str]
         self._check_field_types(field_types)
