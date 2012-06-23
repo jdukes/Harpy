@@ -244,9 +244,27 @@ class ValidationError(Exception):
         return str(self.msg)
 
 
+class InvalidChild(Exception):
+    """This exception should be raised when an invalid child is added to
+    a parent.
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return str(self.msg)
+
+
 ###############################################################################
 # Interface Functions and Classes
 ###############################################################################
+
+def _localize_datetime(dto):
+    if not dto.tzinfo: #handle zone info not being added by python
+        dto = dto.replace(tzinfo=TIMEZONE)
+        return dto
+    #according to the spec this needs to be ISO 8601
+    #YYYY-MM-DDThh:mm:ss.sTZD
 
 
 class HarEncoder(json.JSONEncoder):
@@ -261,11 +279,8 @@ class HarEncoder(json.JSONEncoder):
             return dict( (k, v) for k, v in obj.__dict__.iteritems()
                          if k != "_parent" )
         if isinstance(obj, datetime):
-            if not obj.tzinfo: #handle zone info not being added by python
-                obj = obj.replace(tzinfo=TIMEZONE)
+            obj = localize(obj)
             return obj.isoformat()
-            #according to the spec this needs to be ISO 8601
-            #YYYY-MM-DDThh:mm:ss.sTZD
         return json.JSONEncoder.default(self, obj)
 
 
@@ -569,7 +584,7 @@ class Creator(_MetaHar):
 class Browser(Creator):
 
     def __repr__(self):
-        return "<Browser  '{0}': {1} >".format(
+        return "<Browser '{0}': {1} >".format(
             self.name, self._get_printable_kids())
 
 
@@ -598,9 +613,24 @@ class Page(_MetaHar):
             raise ValidationError("Failed to parse date: {0}".format(err))
         self.pageTimings = PageTimings(self.pageTimings)
 
+    def set_defaults(self):
+        """This method sets defaults for objects not instantiated via
+        'init_from' if 'empty' parameter is set to False (default). It can
+        also be used to reset a har to a default state.
+
+        """
+        self.startedDateTime = _localize_datetime(datetime.now())
+        self.id = None #this will need to be added later
+        # id is not very clear in the spec... 
+        self.title = "[Title could not be determined]"
+        #title cannot be set to a valid default
+        #invalid html could result in this.
+        self.pageTimings = PageTimings()
+
     def __repr__(self):
         return "<Page with title '{0}': {1}>".format(
-            self.title, self._get_printable_kids())
+            "title" in self and self.title or "[undefined]",
+            self._get_printable_kids())
 
 
 #------------------------------------------------------------------------------

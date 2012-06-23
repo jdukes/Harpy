@@ -193,21 +193,40 @@ class TestBrowser(TestCreator):
     def setUp(self):
         self.obj = har.Browser
 
+    def test_default_repr_(self):
+        expected = "<Browser 'Harpy': ('version', 'name') >"
+        obj = self.obj()
+        self.assertEqual(expected, obj.__repr__())
+
+    def test_empty_repr_(self):
+        expected = r"<Created by [uninitialized]: (empty)>"
+        obj = self.obj(empty=True)
+        self.assertEqual(expected, obj.__repr__())
+        assert False #this needs to be finished
+
 
 class TestPage(ObjectTest):
 
     def setUp(self):
         self.obj = har.Page
     
-    def test___repr__(self):
-        # page = Page()
-        # self.assertEqual(expected, page.__repr__())
-        assert False # TODO: implement your test here
+    def test_default_repr__(self):
+        expected = r"<Page with title '[invalid]': ('pageTimings', 'title')>"
+        page = self.obj()
+        self.assertEqual(expected, page.__repr__())
+
+    def test_empty_repr__(self):
+        expected = r"<Page with title '[undefined]': (empty)>"
+        har_container = self.obj(empty=True)
+        self.assertEqual(expected, har_container.__repr__())
+
 
     def test_validate(self):
         # page = Page()
         # self.assertEqual(expected, page.validate())
         assert False # TODO: implement your test here
+
+    #!!! need to add a test that a non-uniq page cannot be added to an entry
 
 class TestPageTimings(ObjectTest):
     def test___repr__(self):
