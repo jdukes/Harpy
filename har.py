@@ -851,7 +851,7 @@ class Request(_MetaHar):
         The 'render' method calls this method, it can be used instead
         if you think your boss might yell at you.
 
-        """        
+        """
         for node in ["url", "httpVersion", "headers"]:
             assert node in self, \
                    "Cannot render request with unspecified {0}".format(node)
