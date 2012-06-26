@@ -10,7 +10,7 @@ original request or response can be perfectly reconstructed from the
 object. It should always be the case that a request or response that
 is rendered in to an object using Harpy, can be rendered back from the
 object to a raw request or response that is exactly the same as the
-original. Some libraries are lossy, Harpy is lossless. 
+original. Some libraries are lossy, Harpy is lossless.
 
 This software is designed to be used for web testing, specifically
 security testing. Focus, therefore, has been placed on reproducibility
@@ -27,15 +27,16 @@ the object::
     In [0]: hc = HarContainer()
 
     In [1]: hc
-    Out[1]: <HarContainer: (empty)>
+    Out[1]: <HarContainer: ('log',)>
 
     In [2]: print hc
-    {}
-    
-Some objects have default values which are pre-set::
+    {"log": {"version": "1.2", "creator":
+             {"version": "$Id$", "name": "Harpy"}, "entries": []}}
+
+All objects have default values which are pre-set::
 
     In [3]: r = Request()
-    
+
     In [4]: r
     Out[4]: <Request to 'http://example.com/': ('cookies', 'url',
                 'queryString', 'headers', 'method', 'httpVersion')>
@@ -43,10 +44,10 @@ Some objects have default values which are pre-set::
 To not set default values on object creation disable default settings::
 
     In [5]: r = Request(empty=True)
-    
+
     In [6]: r
     Out[6]: <Request to '[undefined]': (empty)>
-    
+
     In [7]: print r
     {}
 
@@ -61,19 +62,19 @@ that contains json, or a dictionary::
 
      In [8]: r = Request(r'{"cookies": [], "url":
                           "http://example.com/foobarbaz", ...)
-     
+
      In [9]: r
      Out[9]: <Request to 'http://example.com/foobarbaz':
                  ('cookies', 'url', 'queryString', 'headers',
                   'httpVersion', 'method')>
-     
+
      In [10]: hc = HarContainer(urlopen('http://demo.ajaxperformance.com/har/google.har').read())
-     
+
      In [11]: hc
      Out[11]: <HarContainer: ('log',)>
-     
+
      In [12]: hc = HarContainer(open('./google.har'))
-     
+
      In [13]: hc.log.entries[0].request
      Out[13]: <Request to 'http://www.google.com/': ('cookies', 'url', 'queryString', 'headers', 'httpVersion', 'method')>
 
@@ -81,11 +82,11 @@ Some objects, such as requests and responses, can consumed from raw::
 
      In [14]: raw
      Out[14]: 'GET / HTTP/1.1\\r\\nHost: localhost:1234\\r\\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0\\r\\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\\r\\nAccept-Language: en-us,en;q=0.5\\r\\nAccept-Encoding: gzip, deflate\\r\\nConnection: keep-alive\\r\\n\\r\\n'
-     
+
      In [15]: r = Request()
-     
+
      In [16]: r.devour(raw)
-     
+
      In [17]: r
      Out[17]: <Request to 'http://localhost:1234/': ('cookies', 'url', 'queryString', 'headers', 'method', 'httpVersion')>
 
@@ -98,7 +99,7 @@ For polite people there's an alias::
 
     In [19]: help(Request.render)
     Help on method render in module __main__:
-    
+
     render(self) unbound __main__.Request method
         Return a string that should be exactly equal to the
 	original request.
@@ -175,7 +176,6 @@ except ImportError:
            "python-dateutil` or `easy_install dateutil`.")
     raise
 from datetime import datetime
-from base64 import b64encode, b64decode
 
 ##############################################################################
 # Constants
@@ -268,7 +268,7 @@ class _MetaHar(object):
         #it should be possible to init without validataion
         """ This is the _MetaHar object. It is used as the meta class
         for other objects. It should never be instantiated directly.
-        
+
         """
         assert not self.__class__ in [_MetaHar, _KeyValueHar], (
             "This is a meta class used to type other classes. "
@@ -320,7 +320,7 @@ class _MetaHar(object):
     def _get_printable_kids(self):
         """Return a tuple of all objects that are children of the
         object on which the method is called.
-        
+
         """
         return tuple( str(k) for k, v in self.__dict__.iteritems()
                  if (str(k) != "_parent" and
@@ -428,7 +428,7 @@ class _MetaHar(object):
                 raise ValidationError(
                     "{0} failed '{1}' must not be empty"
                     .format(self.__class__.__name__, field))
-            
+
 
 #------------------------------------------------------------------------------
 
@@ -761,14 +761,16 @@ class Request(_MetaHar):
         # Raw request does not have proto info
         assert len(req.strip()), "Empty request cannot be devoured"
         if keep_b64_raw:
-            self._b64_raw_req = b64encode(req) #just to be sure we're
-                                               #keeping a copy of the
-                                               #raw request by
-                                               #default. This is a
-                                               #person extension to
-                                               #the spec.
-                                               #
-                                               #This is not default
+            self._b64_raw_req = req.encode('base64') #just to be sure we're
+                                                     #keeping a copy
+                                                     #of the raw
+                                                     #request by
+                                                     #default. This is
+                                                     #a person
+                                                     #extension to the
+                                                     #spec.
+                                                     #
+                                                     #This is not default
         req = StringIO(req)
         #!!! this doesn't always happen
         method, path, httpVersion = req.next().strip().split()
@@ -913,12 +915,12 @@ class Response(_MetaHar):
         # Raw request does not have proto info
         assert len(res.strip()), "Empty response cannot be devoured"
         if keep_b64_raw:
-            self._b64_raw_req = b64encode(res) #just to be sure we're
-                                               #keeping a copy of the
-                                               #raw request by
-                                               #default. This is a
-                                               #person extension to
-                                               #the spec.
+            self._b64_raw_req = res.encode('base64') #just to be sure we're
+                                                     #keeping a copy of the
+                                                     #raw request by
+                                                     #default. This is a
+                                                     #person extension to
+                                                     #the spec.
         res = StringIO(res)
         line = res.next().strip().split()
         httpVersion = line[0]
@@ -964,7 +966,7 @@ class Response(_MetaHar):
         try:
             content["text"] = content["text"].encode('utf8')
         except UnicodeDecodeError:
-            content["text"] = b64encode(content["text"])
+            content["text"] = content["text"].encode('base64')
             if encoding:
                 content["encoding"] =  encoding + "; base64"
             else:
@@ -999,8 +1001,8 @@ class Cookie(_MetaHar):
         if "expires" in self:
             try:
                 self.expires = parser.parse(self.expires)
-            except Exception, e:
-                raise ValidationError("Failed to parse date: {0}".format(e))
+            except Exception, err:
+                raise ValidationError("Failed to parse date: {0}".format(err))
 
     def __repr__(self):
         return "<Cookie '{0}' set to '{1}': {2}>".format(
@@ -1026,7 +1028,7 @@ class Cookie(_MetaHar):
                     self.secure = True
                 elif attr  == "HttpOnly":
                     self.httpOnly = True
-            
+
 
 #------------------------------------------------------------------------------
 
@@ -1176,13 +1178,14 @@ def test():
             content = req.read()
             hc = HarContainer(content)
             print "Successfully loaded har %s from %s" % (repr(hc), i)
-        except Exception, e:
+        except Exception, err:
             print "failed to load har from %s" % i
-            print e
+            print err
 
-def usage():
-    print "usage: %s (docs|test)\n"
-    print "Either print out documentation for this module or run a test."
+def usage(progn):
+    use = "usage: %s (docs|test)\n\n" % progn
+    use += "Either print out documentation for this module or run a test."
+    return use
 
 if __name__ == "__main__":
     from sys import argv
@@ -1192,8 +1195,8 @@ if __name__ == "__main__":
         elif argv[1] == "test":
             test()
     else:
-        usage()
+        print usage(argv[0])
 
 # Local variables:
-# eval: (add-hook 'after-save-hook '(lambda () (shell-command "pylint har.py > lint")) nil t)
+# eval: (add-hook 'after-save-hook '(lambda () (shell-command "pep8 har.py > lint")) nil t)
 # end:

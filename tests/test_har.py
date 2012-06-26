@@ -181,7 +181,7 @@ class TestCreator(HarObjectTest):
     def test_validate_good(self):
         #make sure good stuff works
         good_json = '{"version": "$Id$", "name": "Harpy"}'
-        log = har.Creator(good_json)
+        har.Creator(good_json)
 
     def test_validate_bad_types(self):
         for bad_types_json in ['{"version": 3, "name": "Harpy"}',
@@ -221,11 +221,18 @@ class TestPage(HarObjectTest):
         har_container = self.obj(empty=True)
         self.assertEqual(expected, har_container.__repr__())
 
+    def test_validate_good(self):
+        #make sure good stuff works
+        good_json = '{"id": "1", "startedDateTime": "2012-06-25T22:50:54.188477-07:00", "pageTimings": {}, "title": "Test Page"}'
+        har.Page(good_json)
 
-    def test_validate(self):
-        # page = Page()
-        # self.assertEqual(expected, page.validate())
-        assert False # TODO: implement your test here
+    def test_validate_bad_types(self):
+        for bad_types_json in ['{"id": null, "startedDateTime": "2012-06-25T22:50:54.188477-07:00", "pageTimings": {}, "title": "Test Page"}',
+                               '{"id": null, "startedDateTime": "2012-06-25T22:50:54.188477-07:00", "pageTimings": {}, "title": 2}'
+                               ]:
+            self.assertRaises(har.ValidationError,
+                              har.Page,
+                              bad_types_json)
 
     #!!! need to add a test that a non-uniq page cannot be added to an entry
 
@@ -392,8 +399,16 @@ class TestTest(HarObjectTest):
 
 class TestUsage(unittest.TestCase):
     def test_usage(self):
-        # self.assertEqual(expected, usage())
-        assert False # TODO: implement your test here
+        expected = "usage: %s (docs|test)\n\n" % "test"
+        expected += ("Either print out documentation "
+                     "for this module or run a test.")
+        self.assertEqual(expected, har.usage("test"))
+
+# class TestFullLoadFromFile(unittest.TestCase):
+
+#     def load_ssb(self):
+#         tests
+
 
 if __name__ == '__main__':
     unittest.main()
