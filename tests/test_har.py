@@ -237,10 +237,14 @@ class TestPage(HarObjectTest):
     #!!! need to add a test that a non-uniq page cannot be added to an entry
 
 class TestPageTimings(HarObjectTest):
-    def test___repr__(self):
-        # page_timings = PageTimings()
-        # self.assertEqual(expected, page_timings.__repr__())
-        assert False # TODO: implement your test here
+
+    def setUp(self):
+        self.obj = har.PageTimings
+
+    def test__repr__(self): #no values are required
+        expected = r"<Page timing : (empty)>"
+        obj = self.obj(empty=True)
+        self.assertEqual(expected, obj.__repr__())
 
     def test_validate(self):
         # page_timings = PageTimings()
@@ -248,15 +252,31 @@ class TestPageTimings(HarObjectTest):
         assert False # TODO: implement your test here
 
 class TestEntry(HarObjectTest):
-    def test___repr__(self):
-        # entry = Entry()
-        # self.assertEqual(expected, entry.__repr__())
-        assert False # TODO: implement your test here
+
+    def setUp(self):
+        self.obj = har.Entry
+
+    def test_default_repr__(self): #no values are required
+        expected = r""
+        obj = self.obj(empty=True)
+        self.assertEqual(expected, obj.__repr__())
+
+    def test_empty_repr__(self): #no values are required
+        expected = r"<Page timing : (empty)>"
+        obj = self.obj(empty=True)
+        self.assertEqual(expected, obj.__repr__())
 
     def test_validate(self):
         # entry = Entry()
         # self.assertEqual(expected, entry.validate())
         assert False # TODO: implement your test here
+
+    def test_uniq(self):
+        # add test for uniq
+        # entry = Entry()
+        # self.assertEqual(expected, entry.validate())
+        assert False # TODO: implement your test here
+        
 
 class TestRequest(HarObjectTest):
     def test___repr__(self):

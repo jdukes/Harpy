@@ -93,7 +93,7 @@ Some objects, such as requests and responses, can consumed from raw::
 These objects can also be rendered back to raw::
 
       In [18]: r.puke()
-      Out[18]: 'GET / HTTP/1.1\\r\\nHost: localhost:1234\\r\\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) Gecko/20100101 Firefox/13.0\\r\\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\\r\\nAccept-Language: en-us,en;q=0.5\\r\\nAccept-Encoding: gzip, deflate\\r\\nConnection: keep-alive\\r\\n\\r\\n'
+      Out[18]: 'GET / HTTP/1.1\\r\\nHost: localhost:1234\\r\\nUser-Agent: ...
 
 For polite people there's an alias::
 
@@ -674,6 +674,17 @@ class Entry(_MetaHar):
     def __repr__(self):
         return "<Entry object {0}>".format(self._get_printable_kids())
 
+    # def set_defaults(self):
+    #     """This method sets defaults for objects not instantiated via
+    #     'init_from' if 'empty' parameter is set to False (default). It can
+    #     also be used to reset a har to a default state.
+
+    #     """
+    #     self.startedDateTime = _localize_datetime(datetime.now())
+    #     #ok, this isn't right... 
+    #     self.request = Request()
+    #     self.response = Response()
+
 
 #------------------------------------------------------------------------------
 
@@ -838,7 +849,9 @@ class Request(_MetaHar):
         original request.
 
         The 'render' method calls this method, it can be used instead
-        if you think your boss might yell at you."""        
+        if you think your boss might yell at you.
+
+        """        
         for node in ["url", "httpVersion", "headers"]:
             assert node in self, \
                    "Cannot render request with unspecified {0}".format(node)
