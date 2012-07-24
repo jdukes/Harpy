@@ -173,7 +173,7 @@ try:
 except ImportError:
     print ("Please verify that dateutil is installed. On Debian based systems "
            "like Ubuntu this can be  done with `aptitude install "
-           "python-dateutil` or `easy_install dateutil`.")
+           "python-dateutil` or `easy_install python-dateutil`.")
     raise
 from datetime import datetime
 
