@@ -1002,12 +1002,16 @@ class Cookie(_MetaHar):
         field_types = {"name":[unicode, str],
                        "value":[unicode, str]}
         self._has_fields(*field_types.keys())
-        for field in ["comment", "path", "domain", "expires"]:
+        for field in ["comment", "path", "domain"]:
             if field in self.__dict__:
                 field_types[field] = [unicode, str]
         for field in ["httpOnly", "secure"]:
             if field in self.__dict__:
                 field_types[field] = bool
+        # Handle fields which can be null, or not set.
+        for field in ["expires"]:
+            if field in self.__dict__:
+                field_types[field] = [unicode, str, type(None)]
         self._check_field_types(field_types)
 
     def _construct(self):
