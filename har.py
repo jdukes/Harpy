@@ -173,7 +173,7 @@ try:
 except ImportError:
     print ("Please verify that dateutil is installed. On Debian based systems "
            "like Ubuntu this can be  done with `aptitude install "
-           "python-dateutil` or `easy_install dateutil`.")
+           "python-dateutil` or `easy_install python-dateutil`.")
     raise
 from datetime import datetime
 
@@ -1002,12 +1002,16 @@ class Cookie(_MetaHar):
         field_types = {"name":[unicode, str],
                        "value":[unicode, str]}
         self._has_fields(*field_types.keys())
-        for field in ["comment", "path", "domain", "expires"]:
+        for field in ["comment", "path", "domain"]:
             if field in self.__dict__:
                 field_types[field] = [unicode, str]
         for field in ["httpOnly", "secure"]:
             if field in self.__dict__:
                 field_types[field] = bool
+        # Handle fields which can be null, or not set.
+        for field in ["expires"]:
+            if field in self.__dict__:
+                field_types[field] = [unicode, str, type(None)]
         self._check_field_types(field_types)
 
     def _construct(self):
