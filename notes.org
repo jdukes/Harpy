@@ -7,14 +7,12 @@
 **** har.py
 **** utils/
 ***** <utils>
-** extend har with _sequence _serverIPAddress
 ** objects will be able to be instantiated in different ways but will all return either a har request or har response object
 ** har should be able to create a har object from a har file, har stream, a http file, or http stream
 ** har objects will be able to 
 * req and har parser notes
-** request-text to har-request
-*** takes in request text and parses it
-*** resolves the ip from host and exposes _serverIPAddress
+** use HTTPMessage for parsing headers
+
 ** _sequence is not required, but MUST be exposed IF multiple requests are to be parsed
 * extra notes
 ** all tied together called Cthulhu Web Destroyer (cwd)
