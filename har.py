@@ -750,16 +750,19 @@ class Request(_MetaHar):
         #also doens't take in to account sequence.. fuck
         #
         #there's a more pythonic way to do this....
+        #Headers needs to be a custom object. 
         try:
             headers = [ header for header in self.headers
                         if not header.name == name ]
             h = [ header for header in self.headers
                         if header.name == name ][0]
             h.value = value
+            #should be
+            #self.headers.set('Header','value')
+            #also need get_headers and add_headrs
         except:
             pass
-        else:
-            h = Header({"name": name, "value": value})
+        h = Header({"name": name, "value": value})
         headers.append(h)
 
     def __repr__(self):
