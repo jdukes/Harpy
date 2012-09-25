@@ -20,10 +20,10 @@ except ImportError:
 	       "functionality to work")
 	raise
 try:
-	from .har import Request, Response, Timings, Entry
+	from .har import Request, Response, Timings, Entry, Cache
 	from .utils import mario
 except ImportError:
-	from harpy.har import Request, Response, Timings, Entry
+	from harpy.har import Request, Response, Timings, Entry, Cache
 	from harpy.utils import mario
 import sys
 from urlparse import urlparse
@@ -32,12 +32,14 @@ from datetime import datetime
 def process(request, outlist=None):
 
 	try:
+		entry = Entry()
+		entry.request = request
+		entry.cache = Cache()
 		# create the HTTP GET request from the URL
 		raw_request = request.puke()
-		
 		# prepare response for late use
-		response = Response()
-		_timings = Timings()
+		response = Response(empty=True)
+		entry.timings = Timings()
 		_sequence = None
 		if '_sequence' in request:
 			_sequence = request._sequence
@@ -61,27 +63,28 @@ def process(request, outlist=None):
 		# else resolve the hostname
 		else:
 			# to resolve DNS asynchronously, call resolve() prior to connect()
-			_serverIPAddress = yield resolve(host)
+			entry.serverIPAddress = yield resolve(host)
 
 		# connect
 		start = datetime.now()
 		yield connect(host, port)
-		_timings.connect = get_time_delta(start)
+		#yield connect(host, port, ssl=ssl) #this doesn't seem to work
+		entry.timings.connect = get_time_delta(start)
 		
 
 		# write
 		start = datetime.now()
 		yield write(raw_request)
-		_timings.send = get_time_delta(start)
+		entry.timings.send = get_time_delta(start)
 		
 		# read
 		start = datetime.now()
 		raw_response = yield read()
-		_timings.wait = get_time_delta(start)
+		entry.timings.wait = get_time_delta(start)
 
 		
 		# set bogus recieve timing
-		_timings.recieve = 0
+		entry.timings.recieve = 0
 		
 		# calculate endtime
 		end = datetime.now()
@@ -91,16 +94,14 @@ def process(request, outlist=None):
 		#print raw_response
 		response.devour(raw_response)
 		#print response
+		entry.response = response
 		if type(outlist) == list:
 			
 			#entry = E
-			outlist.append(response)
+			outlist.append(entry)
 		else:
-			response._timings = _timings
-			
 			if _sequence:
 				response = _sequence
-			response._serverIPAddress = _serverIPAddress
 			print response
 
 		# # close the connection
@@ -121,11 +122,11 @@ def make_requests(g):
 	return (process(request) for request in g)
 
 
-def response_generator(g):
+def entry_generator(g):
 	outlist = []
 	run(process(request, outlist) for request in g)
-	for response in outlist:
-		yield response
+	for entry in outlist:
+		yield entry
 
 
 if __name__=='__main__':
