@@ -167,9 +167,7 @@ import json
 from StringIO import StringIO
 from socket import inet_pton, AF_INET6, AF_INET #used to validate ip addresses
 from socket import error as socket_error #used to validate ip addresses
-from httplib import HTTPMessage #overridden for parsing headers
 from urllib2 import urlopen #this should be removed
-
 try:
     from dateutil import parser, tz
 except ImportError:
@@ -254,25 +252,6 @@ class HarEncoder(json.JSONEncoder):
             return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
 
-
-class HARMessage(HTTPMessage):
-    """Class used to parse headers."""
-
-    def __init__(self, fp, seekable = 1):
-        self.sequence = 0
-        self.har_headers = []
-        HTTPMessage.__init__(self, fp, seekable)
-
-    def addheader(self, key, value):
-        HTTPMessage.addheader(self, key, value)
-        header = {"name":  key,
-                  "value": value,
-                  "_sequence": self.sequence}
-        self.har_headers.append(Header(header))
-        self.sequence += 1
-
-    def get_har_headers(self):
-        return self.har_headers
 
 ###############################################################################
 # HAR Classes
@@ -809,17 +788,33 @@ class Request(_MetaHar):
         self.method = method
         self.httpVersion = httpVersion
         self.bodySize = 0
-        harmessage = HARMessage(req)
-        self.headers = harmessage.get_har_headers()
+        self.headers = []
         postData = None
         if method == "POST":
             postData = {"params": [],
                         "mimeType": "",
                         "text": ""}
-            self.bodySize = harmessage.get('Content-Length')
-            postData["mimeType"]  = harmessage.get('Content-Type')
-        host = harmessage.get("Host")
-        self.url = '{0}://{1}{2}'.format(proto, host, path)
+        seq = 0
+        for header in req: #make these the same for request and
+                           #response... this is stupid
+            header = header.strip()
+            if not ( header and ": " in header):
+                break
+            header = dict(zip(["name", "value"], header.split(': ')))
+            #length should be calculated for each request unless
+            #explicitly set.
+            #!!! remember to note this in docs so it's no suprise.
+            if header["name"] == "Content-Length":
+                self.bodySize = header["value"]
+                continue
+            if header["name"] == "Content-Type":
+                postData["mimeType"] = header["value"]
+                continue
+            if header["name"] == "Host":
+                self.url = '{0}://{1}{2}'.format(proto, header["value"], path)
+            header["_sequence"] = seq
+            self.headers.append(Header(header))
+            seq += 1
         headerSize = req.tell()
         seq = 0
         if postData:
