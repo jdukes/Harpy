@@ -11,8 +11,9 @@
 ** har should be able to create a har object from a har file, har stream, a http file, or http stream
 ** har objects will be able to 
 * req and har parser notes
-** use HTTPMessage for parsing headers
-
+** use HTTPMessage for parsing all headers <- FIX!!!! is callous to case
+** have "replace" and "replace_update" that updates things like content-length
+** find a better way to set headers... maybe a method of request??
 ** _sequence is not required, but MUST be exposed IF multiple requests are to be parsed
 * extra notes
 ** all tied together called Cthulhu Web Destroyer (cwd)
