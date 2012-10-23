@@ -216,6 +216,7 @@ class InvalidChild(Exception):
     """This exception should be raised when an invalid child is added to
     a parent.
     """
+
     def __init__(self, msg):
         self.msg = msg
 
@@ -335,7 +336,7 @@ class _MetaHar(object):
         This is essentially __setattr__ except that it returns an
         instance of the object with the new value when called. This
         method was added to make comprensions easier to write. The
-        canonical use case is for sequencing:
+        textbook use case is for sequencing:
 
         In [0]: [ r.replace(url='http://foo.com/%d/user' % i)
                     for i in xrange(10) ]
