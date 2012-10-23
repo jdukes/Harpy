@@ -298,6 +298,8 @@ class _MetaHar(object):
                  (isinstance(v, _MetaHar)
                   or isinstance(v, list)
                   or isinstance(v, unicode)
+                  or isinstance(v, dict)
+                  or isinstance(v, int)
                   or isinstance(v, str)))
 
     def __contains__(self, obj):
@@ -315,8 +317,10 @@ class _MetaHar(object):
     def _get(self, name, default='[uninitialized]'):
         """Internal method to return a default value.
         """
-        return (name in self and
-                self.__getattribute__(name)) or default
+        try:
+            return self.__getattribute__(name)
+        except AttributeError:
+            return default
 
     def _get_printable_kids(self):
         """Return a tuple of all objects that are children of the
@@ -325,9 +329,11 @@ class _MetaHar(object):
         """
         return tuple(str(k) for k, v in self.__dict__.iteritems()
                  if (str(k) != "_parent" and
-                     (isinstance(v, _MetaHar)
-                      or isinstance(v, list)
+                     (isinstance(v, _MetaHar) # !!! this is aweful
+                      or isinstance(v, list)  # all of this
                       or isinstance(v, unicode)
+                      or isinstance(v, dict)  # needs to go
+                      or isinstance(v, int)
                       or isinstance(v, str)))) or '(empty)'
 
     def replace(self, **kwarg):
@@ -340,10 +346,10 @@ class _MetaHar(object):
 
         In [0]: [ r.replace(url='http://foo.com/%d/user' % i)
                     for i in xrange(10) ]
-        Out[0]: 
+        Out[0]:
         [<Request to 'http://foo.com/0/user': ...
-         <Request to 'http://foo.com/1/user': ... 
-         <Request to 'http://foo.com/2/user': ... 
+         <Request to 'http://foo.com/1/user': ...
+         <Request to 'http://foo.com/2/user': ...
         ...
          <Request to 'http://foo.com/9/user': ... ]
 
@@ -597,7 +603,7 @@ class Page(_MetaHar):
         """
         self.startedDateTime = _localize_datetime(datetime.now())
         self.id = None #this will need to be added later
-        # id is not very clear in the spec... 
+        # id is not very clear in the spec...
         self.title = "[Title could not be determined]"
         #title cannot be set to a valid default
         #invalid html could result in this.
@@ -681,7 +687,7 @@ class Entry(_MetaHar):
 
     #     """
     #     self.startedDateTime = _localize_datetime(datetime.now())
-    #     #ok, this isn't right... 
+    #     #ok, this isn't right...
     #     self.request = Request()
     #     self.response = Response()
 
@@ -751,7 +757,7 @@ class Request(_MetaHar):
         #also doens't take in to account sequence.. fuck
         #
         #there's a more pythonic way to do this....
-        #Headers needs to be a custom object. 
+        #Headers needs to be a custom object.
         try:
             headers = [ header for header in self.headers
                         if not header.name == name ]
@@ -863,16 +869,16 @@ class Request(_MetaHar):
         r = "{0} {1} {2}\r\n".format(self.method, path, self.httpVersion)
         #!!! not always clear in code where to use self vs self.__dict__
         #!!! need to fix things so always use one or the other, or is clear
-        if self.headers:
+        if self.headers: #this should be header.puke()
             #these may need to be capitalized. should be fixed in spec.
-            r += "\r\n".join( h.name + ": "+ h.value
-                            for h in self.headers)
+            r += "\r\n".join( h.name + ": " + h.value
+                              for h in self.headers)
             r += "\r\n"
         body = ''
         if 'postData' in self and self.postData:
             if not "Content-Type" in self.headers:
-                r += "Content-Type: {0}\r\n".format(self.postData.mimeType)    
-            joined_params = "&".join( p.name + (p.value and ("="+ p.value))
+                r += "Content-Type: {0}\r\n".format(self.postData.mimeType)
+            joined_params = "&".join( p.name + (p.value and ("=" + p.value))
                                       for p in self.postData.params)
             body = self.postData.text or joined_params
             if not "Content-Length" in self.headers:
@@ -941,7 +947,7 @@ class Response(_MetaHar):
         line = res.next().strip().split()
         httpVersion = line[0]
         status = line[1]
-        statusText  =  " ".join(line[2:])
+        statusText = " ".join(line[2:])
         self.status = status
         self.statusText = statusText
         self.httpVersion = httpVersion
@@ -964,8 +970,6 @@ class Response(_MetaHar):
                 # will need to keep an eye out for content type and encoding
                 content["mimeType"] = header["value"]
                 continue
-            elif header["name"] == "Content-Encoding":
-                encoding = content["encoding"] = header["value"]
             elif header["name"] == "Host":
                 self.url = '{0}://{1}{2}'.format(proto, header["value"], path)
             elif header["name"] == "Location":
@@ -983,18 +987,45 @@ class Response(_MetaHar):
             content["text"] = content["text"].encode('utf8')
         except UnicodeDecodeError:
             content["text"] = content["text"].encode('base64')
-            if encoding:
-                content["encoding"] =  encoding + "; base64"
-            else:
-                content["encoding"] =  "base64"
+            content["encoding"] = "base64"
         self.content = Content(content)
 
     def render(self):
+        """Return a string that should be exactly equal to the
+        originally consumed request."""
         return self.puke()
 
     def puke(self):
-        pass #!!! need to implement
+        """Return a string that should be exactly equal to the
+        original response.
 
+        The 'render' method calls this method, it can be used instead
+        if you think your boss might yell at you.
+
+        """
+        for node in ["httpVersion", "status", "statusText"]:
+            assert node in self, \
+                   "Cannot render request with unspecified {0}".format(node)
+        r = "{0} {1} {2}\r\n".format(self.httpVersion,
+                                     self.status,
+                                     self.statusText)
+        if self.headers: #this should be header.puke()
+            r += "\r\n".join( h.name + ": " + h.value
+                            for h in self.headers)
+            if self.content and self.content["size"] and \
+               not "Content-Length" in [ h.name for
+                                         h in self.headers ]:
+                r += "Content-Length: %d\r\n" % self.content["size"]
+            r += "\r\n"
+            r += "\r\n"
+        if "content" in self and self.content:
+            encoding = self.content.get('encoding')
+            body = self.content.get('text')
+            if body:
+                if encoding:
+                    body = body.decode(encoding)
+                r += body.decode('latin1')
+        return r
 
 #------------------------------------------------------------------------------
 
@@ -1046,7 +1077,7 @@ class Cookie(_MetaHar):
             else:
                 if attr == "Secure":
                     self.secure = True
-                elif attr  == "HttpOnly":
+                elif attr == "HttpOnly":
                     self.httpOnly = True
 
 
@@ -1153,6 +1184,7 @@ class Cache(_MetaHar):
 
 #------------------------------------------------------------------------------
 
+
 class RequestCache(_MetaHar):
 
     def validate_input(self):
@@ -1169,6 +1201,7 @@ class RequestCache(_MetaHar):
         #!!!needs  __repr__
 
 #------------------------------------------------------------------------------
+
 
 class Timings(_MetaHar):
 
@@ -1202,10 +1235,12 @@ def test():
             print "failed to load har from %s" % i
             print err
 
+
 def usage(progn):
     use = "usage: %s (docs|test)\n\n" % progn
     use += "Either print out documentation for this module or run a test."
     return use
+
 
 if __name__ == "__main__":
     from sys import argv
