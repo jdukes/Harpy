@@ -4,14 +4,15 @@
 ** should have __contains__ that checks header names
 *** e.g.: "Content-Length" in headers
 ** should be possible to access as a dictionary
-** should have "add" "update" and "delete" methods to add, update, or delete keys
+** should have "add" "set" (add or update) and "delete" methods to add, update, or delete keys
+*** parent should have a way to use "replace" on headers and cookies
 * should probably have a simple content object that's just a dict with a different __repr__ 
 * add error handling for "puke" method so things are validated going out
 ** error handling modes should be..
 *** "default" validate going out, raise exception when wrong
 *** "force" do exactly what I say no matter what
 *** "fix" transparently fix any incorrect values where possible
-*** puke mode should be configurable on init....somehow...
+***  puke mode should be configurable on init....somehow...
 * general notes
 ** change package layout
 *** harpy
