@@ -1,3 +1,5 @@
+This is still very much under development and I haven't had a lot of time to work on it. 
+
 Harpy is a module for parsing HTTP Archive 1.2.
 
 More information on the HTTP Archive specification can be found here:
